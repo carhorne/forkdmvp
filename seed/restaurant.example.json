@@ -1,0 +1,32 @@
+{
+  "seed_key": "example-only-location",
+  "name": "EXAMPLE ONLY \u2014 Replace with verified restaurant",
+  "slug": "example-only-location",
+  "address": "REPLACE",
+  "city": "REPLACE",
+  "region": "REPLACE",
+  "country": "US",
+  "cuisine": "Example",
+  "price_level": null,
+  "website_url": "https://example.com",
+  "menu_source_url": "https://example.com/menu",
+  "source_checked_at": "2026-09-22T00:00:00Z",
+  "menu_coverage": "selected",
+  "image_path": null,
+  "is_active": true,
+  "menu": [
+    {
+      "seed_key": "example-dish",
+      "name": "EXAMPLE ONLY \u2014 Replace with verified dish",
+      "slug": "example-dish",
+      "category": "Entrees",
+      "description": null,
+      "price_cents": null,
+      "currency": "USD",
+      "image_path": null,
+      "source_url": "https://example.com/menu",
+      "source_checked_at": "2026-09-22T00:00:00Z",
+      "is_active": true
+    }
+  ]
+}

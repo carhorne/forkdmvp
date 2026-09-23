@@ -46,8 +46,9 @@ Checks:
 - M2: isolated DB tests: 8.0 + 10.0 → 9.0 / 2 via restaurant_menu and dish_detail; Top Rated order Delta(9.5/2), Alpha(9/2), Bravo(9/1), Charlie(9/1), Foxtrot(3/1), then unrated Aardvark, Echo with null average and 0 count. Development: two labelled test accounts rated Bombay House "Saag Paneer" 8.0 and 10.0 → menu and dish page show 9.0 / 2 ratings and the dish moves from last to first; accounts and ratings deleted afterwards (development ratings: 0).
 - M3: dish links open without login; retired dish still resolves with is_active false and rating history (DB test); unknown, malformed and quote-injection dish IDs → HTTP 404.
 - Chrome at 390/320 px: no overflow, targets ≥ 44 px (inline restaurant name link on the dish page is duplicated by the 44 px back link), search → restaurant → dish → back works, no console errors.
-Database/auth impact: one additive read-only function; no table or policy changes. Production migration pending until the preview check passes.
-Remaining issues: real-phone check; apply 202609230001 to forkdprod before merging (the production build calls dish_detail).
+- Vercel preview (slice-2-menu, development data, via `vercel curl`): Fat Daddy's menu 10 dishes with "Price unavailable"; dish page renders "No ratings yet"; malformed dish ID → 404.
+Database/auth impact: one additive read-only function; no table or policy changes. Applied to development and, after the preview passed, to forkdprod (`supabase db push`; anon RPC call returns 200). CLI relinked to development.
+Remaining issues: real-phone check.
 
 ## Slice 1 evidence — 2026-09-22
 

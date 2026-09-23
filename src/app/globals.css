@@ -21,9 +21,16 @@ h1 { font-family: Georgia, serif; font-size: clamp(42px, 8vw, 68px); line-height
 .section-bar { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #cbd0c3; padding-block: 20px; gap: 16px; }
 .section-bar h2 { font-size: 16px; margin: 0; }
 .count { font-size: 12px; color: var(--muted); }
-.catalog { display: grid; gap: 16px; }
+.catalog { display: grid; gap: 16px; list-style: none; padding: 0; margin: 0 0 16px; }
 .restaurant, .notice { border: 1px solid #d4d6c9; border-radius: 12px; padding: 24px; background: #fffdf7; overflow-wrap: anywhere; }
+.restaurant { display: block; height: 100%; text-decoration: none; }
+.restaurant:hover h3 { text-decoration: underline; }
 .restaurant h3 { font: 26px/1.15 Georgia, serif; margin: 0 0 8px; }
+.search { margin-bottom: 20px; }
+.search-row { display: flex; gap: 8px; }
+.search-row input { margin-bottom: 0; flex: 1; min-width: 0; }
+.back { margin-top: 24px; font-size: 14px; }
+.back a, .tap-link a { display: inline-block; padding-block: 12px; }
 .address, .provenance, .muted { color: var(--muted); font-size: 14px; line-height: 1.6; }
 .menu-sample { padding-left: 20px; margin-block: 20px; }
 .menu-sample li { margin-block: 12px; }

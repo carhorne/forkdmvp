@@ -1,1 +1,0 @@
-export default function Loading() { return <section className="hero" role="status"><p className="eyebrow">A LITTLE LOCAL KNOWLEDGE</p><h1>Getting the menus.</h1><p className="intro">One moment while we load the catalog.</p></section>; }

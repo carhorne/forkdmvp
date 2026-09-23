@@ -17,16 +17,21 @@ async function actor<T>(role: "anon" | "authenticated", user: string | null, run
   try { return await run(); } finally { await db.exec("reset role"); }
 }
 const importMenu = (data: unknown, dry = false) => db.query<{ result: Record<string, number | boolean> }>("select public.import_restaurant($1::jsonb, $2) as result", [JSON.stringify(data), dry]);
+// Fresh PostgreSQL with Supabase-like roles/auth, then every migration in order.
+async function migratedDb() {
+  const fresh = new PGlite();
+  await fresh.exec(`create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls;
+    create schema auth; create table auth.users(id uuid primary key);
+    create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
+    grant usage on schema public, auth to anon, authenticated, service_role;
+    grant execute on function auth.uid() to anon, authenticated;
+    insert into auth.users(id) values ('${A}'), ('${B}');`);
+  for (const f of (await readdir("supabase/migrations")).filter((f) => f.endsWith(".sql")).sort()) await fresh.exec(await readFile(`supabase/migrations/${f}`, "utf8"));
+  return fresh;
+}
 describe("migrations, RLS and atomic seed import on real PostgreSQL engine", () => {
   beforeAll(async () => {
-    db = new PGlite();
-    await db.exec(`create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls;
-      create schema auth; create table auth.users(id uuid primary key);
-      create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
-      grant usage on schema public, auth to anon, authenticated, service_role;
-      grant execute on function auth.uid() to anon, authenticated;
-      insert into auth.users(id) values ('${A}'), ('${B}');`);
-    for (const f of (await readdir("supabase/migrations")).filter((f) => f.endsWith(".sql")).sort()) await db.exec(await readFile(`supabase/migrations/${f}`, "utf8"));
+    db = await migratedDb();
     await importMenu(fixture);
     dish = (await db.query<{ id: string }>("select id from public.dishes")).rows[0].id;
     restaurant = (await db.query<{ id: string }>("select id from public.restaurants")).rows[0].id;
@@ -64,6 +69,12 @@ describe("migrations, RLS and atomic seed import on real PostgreSQL engine", () 
       const saved = (await db.query<{ score: string }>("select * from public.public_rating($1)", [rating])).rows[0];
       expect(saved.score).toBe("8"); expect(saved).not.toHaveProperty("user_id"); expect(saved).not.toHaveProperty("email");
       await expect(db.query("select * from public.restaurant_menu($1,51,0)", [restaurant])).rejects.toThrow();
+      const detail = (await db.query<Record<string, unknown>>("select * from public.dish_detail($1)", [dish])).rows[0];
+      expect(Number(detail.average_score)).toBe(9); expect(Number(detail.rating_count)).toBe(2);
+      expect(detail.restaurant_name).toBe(fixture.name); expect(detail.is_active).toBe(true);
+      expect(Object.keys(detail).filter((k) => /user|email|token/i.test(k))).toEqual([]);
+      expect((await db.query("select * from public.dish_detail($1)", ["00000000-0000-4000-8000-00000000dead"])).rows).toHaveLength(0);
+      await expect(db.query("select * from public.dish_detail(null)")).rejects.toThrow();
     });
   });
   it("enforces one rating per user/dish and reflects edits without stored averages", async () => {
@@ -92,6 +103,32 @@ describe("migrations, RLS and atomic seed import on real PostgreSQL engine", () 
   it("retirement preserves public links and blocks writes to inactive targets", async () => {
     await importMenu({ ...fixture, menu: fixture.menu.map((d) => ({ ...d, is_active: false })) });
     await actor("authenticated", A, async () => expect((await db.query("update public.ratings set score=7 where id=$1 returning id", [rating])).rows).toHaveLength(0));
-    await actor("anon", null, async () => expect((await db.query("select * from public.public_rating($1)", [rating])).rows).toHaveLength(1));
+    await actor("anon", null, async () => {
+      expect((await db.query("select * from public.public_rating($1)", [rating])).rows).toHaveLength(1);
+      // Retired dishes leave the menu but their links still resolve, flagged inactive, with history intact.
+      expect((await db.query<{ id: string }>("select * from public.restaurant_menu($1)", [restaurant])).rows.map((r) => r.id)).not.toContain(dish);
+      const retired = (await db.query<{ is_active: boolean; rating_count: number }>("select * from public.dish_detail($1)", [dish])).rows[0];
+      expect(retired.is_active).toBe(false); expect(Number(retired.rating_count)).toBe(2);
+    });
   });
+});
+
+describe("Top Rated menu order (PRODUCT_SPEC.md)", () => {
+  let tdb: PGlite;
+  afterAll(async () => { await tdb?.close(); });
+  it("orders by average desc, count desc, name asc; unrated last with null average and zero count", async () => {
+    tdb = await migratedDb();
+    const names = ["Alpha", "Bravo", "Charlie", "Delta", "Echo", "Aardvark", "Foxtrot"];
+    await tdb.query("select public.import_restaurant($1::jsonb, false)", [JSON.stringify({ ...fixture, menu: names.map((name) => ({ ...fixture.menu[0], name, seed_key: name.toLowerCase(), slug: name.toLowerCase() })) })]);
+    const scores: Record<string, number[]> = { Alpha: [8, 10], Bravo: [9], Charlie: [9], Delta: [9, 10], Foxtrot: [3] };
+    for (const [name, list] of Object.entries(scores)) for (const [i, score] of list.entries())
+      await tdb.query("insert into public.ratings(user_id,dish_id,score) select $1, id, $2 from public.dishes where name=$3", [[A, B][i], score, name]);
+    const id = (await tdb.query<{ id: string }>("select id from public.restaurants")).rows[0].id;
+    await tdb.exec("set role anon");
+    const rows = (await tdb.query<{ name: string; average_score: string | null; rating_count: number }>("select * from public.restaurant_menu($1)", [id])).rows;
+    await tdb.exec("reset role");
+    expect(rows.map((r) => r.name)).toEqual(["Delta", "Alpha", "Bravo", "Charlie", "Foxtrot", "Aardvark", "Echo"]);
+    expect(Number(rows[1].average_score)).toBe(9); expect(Number(rows[1].rating_count)).toBe(2);
+    expect(rows.at(-1)).toMatchObject({ average_score: null }); expect(Number(rows.at(-1)!.rating_count)).toBe(0);
+  }, 60000);
 });

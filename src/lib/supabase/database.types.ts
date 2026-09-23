@@ -1,4 +1,5 @@
-// Schema-aligned types. Regenerate with Supabase CLI once the hosted migrations are applied.
+// Hand-maintained, schema-aligned types. `supabase gen types` marks every RPC result column non-null,
+// which would hide null averages/prices, so update this file with each migration instead.
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 export type Restaurant = {
   id: string; seed_key: string; name: string; slug: string; address: string; city: string; region: string;
@@ -28,6 +29,12 @@ export type Database = {
         id: string; dish_id: string; score: number; updated_at: string; dish_name: string;
         restaurant_id: string; restaurant_name: string; restaurant_address: string;
         dish_is_active: boolean; restaurant_is_active: boolean;
+      }[] };
+      dish_detail: { Args: { p_dish_id: string }; Returns: {
+        id: string; restaurant_id: string; name: string; category: string; description: string | null;
+        price_cents: number | null; currency: string; source_url: string; source_checked_at: string; is_active: boolean;
+        restaurant_name: string; restaurant_address: string; restaurant_city: string; restaurant_region: string;
+        restaurant_is_active: boolean; average_score: number | null; rating_count: number;
       }[] };
       import_restaurant: { Args: { p_data: Json; p_dry_run: boolean }; Returns: Json };
     };

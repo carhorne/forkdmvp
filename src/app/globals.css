@@ -32,10 +32,26 @@ h1 { font-family: Georgia, serif; font-size: clamp(42px, 8vw, 68px); line-height
 .back { margin-top: 24px; font-size: 14px; }
 .back a, .tap-link a { display: inline-block; padding-block: 12px; }
 .address, .provenance, .muted { color: var(--muted); font-size: 14px; line-height: 1.6; }
-.menu-sample { padding-left: 20px; margin-block: 20px; }
-.menu-sample li { margin-block: 12px; }
-.dish-line { display: flex; justify-content: space-between; gap: 12px; font-size: 15px; }
-.dish-line span:last-child { white-space: nowrap; }
+.menu { list-style: none; padding: 0; margin: 0 0 24px; border-top: 1px solid #d4d6c9; }
+.menu li { border-bottom: 1px solid #d4d6c9; }
+.dish { display: flex; justify-content: space-between; align-items: center; gap: 16px; min-height: 64px; padding: 16px 4px; text-decoration: none; overflow-wrap: anywhere; }
+.dish:hover .dish-name { text-decoration: underline; }
+.dish-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.dish-name { font: 20px/1.25 Georgia, serif; }
+.dish-meta { font-size: 13px; color: var(--muted); }
+.dish-desc { font-size: 14px; line-height: 1.6; color: var(--muted); }
+.score { display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; text-align: right; }
+.score-value { font: 700 22px/1 Georgia, serif; color: var(--ink); }
+.score-count, .score-none { font-size: 12px; color: var(--muted); margin-top: 4px; white-space: nowrap; }
+.score-large { align-items: flex-start; text-align: left; }
+.score-large .score-value { font-size: 44px; }
+.score-large .score-count, .score-large .score-none { font-size: 14px; }
+.dish-facts { display: grid; gap: 20px; padding-bottom: 12px; }
+.fact { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid #d4d6c9; padding-top: 16px; }
+.fact-label { font-size: 11px; font-weight: 700; letter-spacing: 1.7px; text-transform: uppercase; color: var(--muted); }
+.fact-value { font: 24px Georgia, serif; }
+.nowrap { white-space: nowrap; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .provenance { border-top: 1px solid #e1e2d9; padding-top: 14px; margin-bottom: 0; font-size: 12px; }
 .notice h2 { font: 25px Georgia, serif; margin-top: 0; }
 .notice p { line-height: 1.7; }

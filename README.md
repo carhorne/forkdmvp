@@ -25,19 +25,30 @@ npm run build
 
 The database tests run the actual SQL migrations on PGlite's PostgreSQL engine with isolated anon/user A/user B roles. They do not contact, reset, or seed a hosted project. Hosted Supabase/email/browser checks are additional acceptance requirements. Webpack is explicitly selected because this workstation's Turbopack worker cannot bind its required port.
 
-## Development database
+## Databases and migrations
 
-Apply the files in `supabase/migrations/` in timestamp order to an empty development project. Use Supabase CLI with administrative database access, or paste each complete file into the project's SQL editor. Inspect any existing schema first. Do not apply migrations as a web-build side effect. No shared database reset is required.
+| Supabase project | Ref | Used by |
+|---|---|---|
+| Development | `tvyzezmbyqszscldrqvi` | Local `.env.local`, Vercel Preview; labelled test data allowed |
+| Production (forkdprod) | `mlmcfssynaqqofadraxe` | Vercel Production; verified seed and real ratings only |
+
+Both projects track migrations in Supabase's history table. Apply new files in `supabase/migrations/` with the Supabase CLI, development first, then production after checks pass. Keep the CLI linked to development by default. Database passwords live in the git-ignored `.env.db.local` (`SUPABASE_DEV_DB_PASSWORD`, `SUPABASE_PROD_DB_PASSWORD`):
+
+```sh
+npx supabase login
+set -a; source .env.db.local; set +a
+SUPABASE_DB_PASSWORD="$SUPABASE_DEV_DB_PASSWORD" npx supabase db push --linked --dry-run   # then without --dry-run
+# Production: link, push, then relink development.
+SUPABASE_DB_PASSWORD="$SUPABASE_PROD_DB_PASSWORD" npx supabase link --project-ref mlmcfssynaqqofadraxe
+SUPABASE_DB_PASSWORD="$SUPABASE_PROD_DB_PASSWORD" npx supabase db push --linked
+SUPABASE_DB_PASSWORD="$SUPABASE_DEV_DB_PASSWORD" npx supabase link --project-ref tvyzezmbyqszscldrqvi
+```
+
+Never reset either database. Do not apply migrations as a web-build side effect.
 
 The seed import RPC is service-role-only and atomic per restaurant. The public read RPCs intentionally bypass ratings RLS only for bounded, identity-free projections. Raw ratings remain owner-only. Score uses `numeric` plus an exact-tenths CHECK to avoid silent rounding.
 
-After applying migrations, generate database types using authenticated Supabase CLI:
-
-```sh
-npx supabase gen types typescript --project-id tvyzezmbyqszscldrqvi > src/lib/supabase/database.types.ts
-```
-
-Current types are schema-aligned until that hosted generation step is available.
+`src/lib/supabase/database.types.ts` is maintained by hand and updated with each migration: `supabase gen types` marks every RPC result column non-null, which would hide null averages and unknown prices.
 
 ## Reviewed seed data
 
@@ -51,11 +62,11 @@ npm run seed:apply -- --target development --project-ref tvyzezmbyqszscldrqvi
 
 Set `SEED_TARGET=development` in the selected local environment file. Production requires a separately configured `--env-file`, matching `SEED_TARGET=production`, and an explicitly matching `--project-ref`. A restaurant failure rolls that restaurant back; prior completed restaurants remain applied and safe to rerun. Dry-run reports create/update/retire/unchanged counts.
 
-## Early Vercel preview
+## Vercel
 
-Import [carhorne/forkdmvp](https://github.com/carhorne/forkdmvp) into Vercel, select Next.js and Node 24. Add `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, and `APP_URL` to Preview, pointing at the development Supabase project. Do not add `SUPABASE_SECRET_KEY`. Configure exact local and stable-preview callback URLs in Supabase Auth, verify real email delivery, and redeploy after environment changes. Keep the initial deployment an early preview; production acceptance remains pending.
+Project `forkdmvp`, Next.js preset, Node 24. `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are non-sensitive: Production points at forkdprod, Preview at development. `APP_URL` is `https://forkdmvp.vercel.app` for Production. Do not add `SUPABASE_SECRET_KEY`. Each Supabase project's Auth allowlist must contain the exact `/auth/callback` URLs it serves. Redeploy after environment changes; public values are built into the bundle.
 
-The deployed routes in this slice are `/`, `/login`, and `/auth/callback`. Restaurant search, full menu/dish routes, rating UI, and sharing are later slices.
+Routes so far: `/` (restaurant search), `/restaurants/[restaurantId]` (restaurant and ranked menu), `/dishes/[dishId]`, `/login`, `/auth/callback`. Menu discovery controls, rating UI and sharing are later slices.
 
 ## File map
 

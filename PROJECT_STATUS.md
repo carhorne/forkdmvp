@@ -1,11 +1,12 @@
 # Forkd project status
 
-Status: Slice 1 implemented; R1–R3 pass locally and on the Vercel preview; real-phone check pending. Slice 0 F2 mobile/sign-out/expired-link checks still open.
-Current slice: 1 — Restaurant search (plan approved; implementation complete).
+Status: Slice 2 implemented; M1–M3 pass locally and against development data. Slice 0 F2 mobile/sign-out/expired-link checks still open.
+Current slice: 2 — Ranked menu (plan approved; implementation complete).
 Launch area: Provo, Utah. 10 official-source menus reviewed and seeded (see seed/SOURCE_REVIEW.md).
 Repository: https://github.com/carhorne/forkdmvp
-Development Supabase: tvyzezmbyqszscldrqvi
-Vercel: project forkdmvp, https://forkdmvp.vercel.app. Production target currently uses the development Supabase project (no production Supabase project yet).
+Development Supabase: tvyzezmbyqszscldrqvi (local, Vercel Preview; labelled test data allowed).
+Production Supabase: forkdprod, mlmcfssynaqqofadraxe (Vercel Production; verified seed, real ratings only).
+Vercel: project forkdmvp, https://forkdmvp.vercel.app.
 
 ## Slice progress
 
@@ -13,7 +14,7 @@ Vercel: project forkdmvp, https://forkdmvp.vercel.app. Production target current
 |---|---|---|
 | 0 Foundation | Manual checks pending | F1, F3, F4 met. F2: desktop magic-link sign-in on production confirmed by owner; mobile, sign-out and expired-link checks blocked by built-in email rate limit. |
 | 1 Restaurant search | Real-phone check pending | R1–R3 pass locally and on the slice-1-search Vercel preview; see Slice 1 evidence. |
-| 2 Ranked menu | Pending | — |
+| 2 Ranked menu | Real-phone check pending | M1–M3 pass locally, in isolated DB tests and with labelled test ratings on development; see Slice 2 evidence. |
 | 3 Menu discovery | Pending | — |
 | 4 Ratings | Pending | — |
 | 5 Sharing | Pending | — |
@@ -23,8 +24,30 @@ Vercel: project forkdmvp, https://forkdmvp.vercel.app. Production target current
 
 - Accepted product scope: six features in ROADMAP.md; 10–20 manually verified local restaurant menus.
 - Default decisions: 1.0–10.0 tenths; one editable rating/user/dish; email magic links; public saved-rating links without account identity; selected menus labelled honestly.
-- Next action: check Slice 1 on a real phone, merge slice-1-search, finish Slice 0 F2 checks, then plan Slice 2 (ranked menu).
-- Release blockers: F2 remaining checks, custom SMTP sender before testers, preview APP_URL, production Supabase project, Slices 2–6.
+- Next action: check Slices 1–2 on a real phone, merge slice-2-menu, finish Slice 0 F2 checks, then plan Slice 3 (menu discovery).
+- Release blockers: F2 remaining checks, custom SMTP sender before testers (built-in limit is 2 emails/hour per project), preview APP_URL, Slices 3–6.
+
+## Production database switch — 2026-09-23
+
+- Created forkdprod (mlmcfssynaqqofadraxe). `supabase db push` applied 202609220001 and 202609220002; seed dry-run → 110 creates; apply → 10 locations / 100 dishes; second apply → all unchanged.
+- Development migration history repaired to mark 202609220001–0002 applied (schema verified present first; no schema change).
+- forkdprod Auth: Site URL https://forkdmvp.vercel.app; allowlist only https://forkdmvp.vercel.app/auth/callback.
+- Vercel Production NEXT_PUBLIC_SUPABASE_* now point at forkdprod; Preview stays on development. Redeployed; live restaurant IDs exist only in forkdprod.
+- Owner accounts from development do not exist in production.
+- Open: development Auth allowlist lacks http://localhost:3000/auth/callback; Vercel Production still holds unused SUPABASE_SECRET_KEY / SUPABASE_SERVICE_ROLE_KEY (development keys) and should drop them.
+
+## Slice 2 evidence — 2026-09-23
+
+Slice and acceptance IDs: 2 / M1–M3.
+Files changed and reason: supabase/migrations/202609230001_dish_detail.sql (SECURITY DEFINER single-dish projection with aggregate, fixed search_path, execute-only grants, returns retired rows, no identity fields); src/lib/catalog.ts (getMenu via restaurant_menu, getDish via dish_detail); src/lib/format.ts (display-only half-up score rounding, counts, "Price unavailable", dates); src/app/restaurants/[restaurantId]/page.tsx (menu in Suspense after the 404 check); src/app/dishes/[dishId]/page.tsx; src/app/score-badge.tsx; database.types.ts (hand-maintained: generated types mark RPC columns non-null); tests; README (database table, migration commands, routes).
+Commands and actual outcomes: lint, typecheck, `npm test` (53/53), build: pass. `supabase db push` of 202609230001 to development: applied.
+Checks:
+- M1: menus list only active dishes (DB test: retired dish leaves restaurant_menu). Fat Daddy's shows 10 dishes, each "Price unavailable"; all dishes "No ratings yet"; no image slots (no approved photos).
+- M2: isolated DB tests: 8.0 + 10.0 → 9.0 / 2 via restaurant_menu and dish_detail; Top Rated order Delta(9.5/2), Alpha(9/2), Bravo(9/1), Charlie(9/1), Foxtrot(3/1), then unrated Aardvark, Echo with null average and 0 count. Development: two labelled test accounts rated Bombay House "Saag Paneer" 8.0 and 10.0 → menu and dish page show 9.0 / 2 ratings and the dish moves from last to first; accounts and ratings deleted afterwards (development ratings: 0).
+- M3: dish links open without login; retired dish still resolves with is_active false and rating history (DB test); unknown, malformed and quote-injection dish IDs → HTTP 404.
+- Chrome at 390/320 px: no overflow, targets ≥ 44 px (inline restaurant name link on the dish page is duplicated by the 44 px back link), search → restaurant → dish → back works, no console errors.
+Database/auth impact: one additive read-only function; no table or policy changes. Production migration pending until the preview check passes.
+Remaining issues: real-phone check; apply 202609230001 to forkdprod before merging (the production build calls dish_detail).
 
 ## Slice 1 evidence — 2026-09-22
 

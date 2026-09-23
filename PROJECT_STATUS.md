@@ -1,6 +1,6 @@
 # Forkd project status
 
-Status: Slice 1 implemented and checked locally; hosted preview check pending. Slice 0 F2 mobile/sign-out/expired-link checks still open.
+Status: Slice 1 implemented; R1–R3 pass locally and on the Vercel preview; real-phone check pending. Slice 0 F2 mobile/sign-out/expired-link checks still open.
 Current slice: 1 — Restaurant search (plan approved; implementation complete).
 Launch area: Provo, Utah. 10 official-source menus reviewed and seeded (see seed/SOURCE_REVIEW.md).
 Repository: https://github.com/carhorne/forkdmvp
@@ -12,7 +12,7 @@ Vercel: project forkdmvp, https://forkdmvp.vercel.app. Production target current
 | Slice | State | Evidence |
 |---|---|---|
 | 0 Foundation | Manual checks pending | F1, F3, F4 met. F2: desktop magic-link sign-in on production confirmed by owner; mobile, sign-out and expired-link checks blocked by built-in email rate limit. |
-| 1 Restaurant search | Implemented | R1–R3 checked locally against development data; see Slice 1 evidence. |
+| 1 Restaurant search | Real-phone check pending | R1–R3 pass locally and on the slice-1-search Vercel preview; see Slice 1 evidence. |
 | 2 Ranked menu | Pending | — |
 | 3 Menu discovery | Pending | — |
 | 4 Ratings | Pending | — |
@@ -23,7 +23,7 @@ Vercel: project forkdmvp, https://forkdmvp.vercel.app. Production target current
 
 - Accepted product scope: six features in ROADMAP.md; 10–20 manually verified local restaurant menus.
 - Default decisions: 1.0–10.0 tenths; one editable rating/user/dish; email magic links; public saved-rating links without account identity; selected menus labelled honestly.
-- Next action: confirm Slice 1 on the Vercel preview and a real phone, finish Slice 0 F2 checks, then plan Slice 2 (ranked menu).
+- Next action: check Slice 1 on a real phone, merge slice-1-search, finish Slice 0 F2 checks, then plan Slice 2 (ranked menu).
 - Release blockers: F2 remaining checks, custom SMTP sender before testers, preview APP_URL, production Supabase project, Slices 2–6.
 
 ## Slice 1 evidence — 2026-09-22
@@ -37,7 +37,8 @@ Local checks against development data:
 - R3: 101 characters → "That search is too long"; 100 → normal search; unknown UUID, malformed ID and quote-injection ID → HTTP 404 page; failure state renders retry.
 - Chrome at 390 and 320 px: no horizontal overflow, all targets ≥ 44 px, keyboard reaches search, back navigation restores the query, no console errors.
 Database/auth impact: none (no migration; anon SELECT on restaurants already allowed).
-Remaining issues: Vercel preview check; real-phone check; loading feedback when opening a restaurant relies on browser navigation only (revisit in Slice 2 when the menu query is heavier); /favicon.ico is missing (pre-existing).
+- Vercel preview (slice-1-search, via `vercel curl`): "ThAi" → both Thai restaurants; "pad thai" → Not in Forkd yet; "bomb" result opens Bombay House; malformed ID → 404.
+Remaining issues: real-phone check; loading feedback when opening a restaurant relies on browser navigation only (revisit in Slice 2 when the menu query is heavier); /favicon.ico is missing (pre-existing).
 
 ## Slice 0 evidence — 2026-09-22
 

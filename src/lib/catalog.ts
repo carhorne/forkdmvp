@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { MENU_PAGE_SIZE, type MenuParams } from "@/lib/menu-params";
 import { isUuid, type RestaurantQuery } from "@/lib/search";
 
 const SEARCH_LIMIT = 50;
@@ -27,12 +28,24 @@ export async function getRestaurant(id: string) {
   return data;
 }
 
-// Active dishes with aggregates in Top Rated order; one bounded RPC, no per-dish requests.
-export async function getMenu(restaurantId: string) {
+// One page of the filtered, sorted menu with aggregates, plus the total match count; one bounded RPC.
+export async function getMenuPage(restaurantId: string, params: Pick<MenuParams, "q" | "category" | "sort" | "page">) {
   const client = await createClient();
-  const { data, error } = await client.rpc("restaurant_menu", { p_restaurant_id: restaurantId, p_limit: 50, p_offset: 0 });
+  const { data, error } = await client.rpc("menu_page", {
+    p_restaurant_id: restaurantId, p_query: params.q || null, p_category: params.category, p_sort: params.sort,
+    p_limit: MENU_PAGE_SIZE, p_offset: (params.page - 1) * MENU_PAGE_SIZE,
+  });
   if (error) throw new Error("Menu unavailable");
-  return data;
+  return { dishes: data, total: data.length ? Number(data[0].total_count) : 0 };
+}
+
+// Distinct categories of the active menu, for the category control.
+export async function getMenuCategories(restaurantId: string) {
+  const client = await createClient();
+  const { data, error } = await client.from("dishes").select("category")
+    .eq("restaurant_id", restaurantId).eq("is_active", true).limit(1000);
+  if (error) throw new Error("Menu unavailable");
+  return [...new Set(data.map((d) => d.category))].sort((a, b) => a.localeCompare(b));
 }
 
 // Public dish by stable ID, including retired dishes so old links keep working. Null means 404.

@@ -30,6 +30,10 @@ export type Database = {
         restaurant_id: string; restaurant_name: string; restaurant_address: string;
         dish_is_active: boolean; restaurant_is_active: boolean;
       }[] };
+      menu_page: { Args: { p_restaurant_id: string; p_query?: string | null; p_category?: string | null; p_sort?: "top" | "most" | "price"; p_limit?: number; p_offset?: number }; Returns: {
+        id: string; restaurant_id: string; name: string; category: string; description: string | null;
+        price_cents: number | null; currency: string; average_score: number | null; rating_count: number; total_count: number;
+      }[] };
       dish_detail: { Args: { p_dish_id: string }; Returns: {
         id: string; restaurant_id: string; name: string; category: string; description: string | null;
         price_cents: number | null; currency: string; source_url: string; source_checked_at: string; is_active: boolean;

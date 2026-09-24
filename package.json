@@ -17,7 +17,8 @@
     "test:db": "vitest run tests/database.test.ts",
     "seed:validate": "tsx scripts/seed/cli.ts validate",
     "seed:dry-run": "tsx scripts/seed/cli.ts dry-run",
-    "seed:apply": "tsx scripts/seed/cli.ts apply"
+    "seed:apply": "tsx scripts/seed/cli.ts apply",
+    "fixture:dev": "tsx scripts/dev-menu-fixture.ts"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.7",

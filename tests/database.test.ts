@@ -1,10 +1,8 @@
-import { PGlite } from "@electric-sql/pglite";
-import { readFile, readdir } from "node:fs/promises";
+import type { PGlite } from "@electric-sql/pglite";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { validateSeed } from "../scripts/seed/schema";
+import { A, B, migratedDb } from "./db-helpers";
 
-const A = "00000000-0000-4000-8000-000000000001";
-const B = "00000000-0000-4000-8000-000000000002";
 const fixture = validateSeed([{
   seed_key: "db-test-location", name: "Database test location", slug: "db-test-location", address: "Test address", city: "Test city", region: "UT", country: "US",
   menu_source_url: "https://restaurant.test/menu", source_checked_at: "2026-01-01T00:00:00Z", menu_coverage: "selected",
@@ -17,18 +15,6 @@ async function actor<T>(role: "anon" | "authenticated", user: string | null, run
   try { return await run(); } finally { await db.exec("reset role"); }
 }
 const importMenu = (data: unknown, dry = false) => db.query<{ result: Record<string, number | boolean> }>("select public.import_restaurant($1::jsonb, $2) as result", [JSON.stringify(data), dry]);
-// Fresh PostgreSQL with Supabase-like roles/auth, then every migration in order.
-async function migratedDb() {
-  const fresh = new PGlite();
-  await fresh.exec(`create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls;
-    create schema auth; create table auth.users(id uuid primary key);
-    create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
-    grant usage on schema public, auth to anon, authenticated, service_role;
-    grant execute on function auth.uid() to anon, authenticated;
-    insert into auth.users(id) values ('${A}'), ('${B}');`);
-  for (const f of (await readdir("supabase/migrations")).filter((f) => f.endsWith(".sql")).sort()) await fresh.exec(await readFile(`supabase/migrations/${f}`, "utf8"));
-  return fresh;
-}
 describe("migrations, RLS and atomic seed import on real PostgreSQL engine", () => {
   beforeAll(async () => {
     db = await migratedDb();

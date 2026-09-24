@@ -62,11 +62,20 @@ npm run seed:apply -- --target development --project-ref tvyzezmbyqszscldrqvi
 
 Set `SEED_TARGET=development` in the selected local environment file. Production requires a separately configured `--env-file`, matching `SEED_TARGET=production`, and an explicitly matching `--project-ref`. A restaurant failure rolls that restaurant back; prior completed restaurants remain applied and safe to rerun. Dry-run reports create/update/retire/unchanged counts.
 
+### Development fixture
+
+For checking paging and sort orders on hosted data, `fixture:dev` creates one clearly labelled 120-dish "Forkd Test Kitchen — development fixture" with three `forkd-dev-fixture-*@example.com` test accounts and their ratings. It refuses to run unless `--project-ref` matches the environment URL and `SEED_TARGET=development`. It is safe to rerun; remove it when done.
+
+```sh
+npm run fixture:dev -- create --project-ref tvyzezmbyqszscldrqvi
+npm run fixture:dev -- cleanup --project-ref tvyzezmbyqszscldrqvi
+```
+
 ## Vercel
 
 Project `forkdmvp`, Next.js preset, Node 24. `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are non-sensitive: Production points at forkdprod, Preview at development. `APP_URL` is `https://forkdmvp.vercel.app` for Production. Do not add `SUPABASE_SECRET_KEY`. Each Supabase project's Auth allowlist must contain the exact `/auth/callback` URLs it serves. Redeploy after environment changes; public values are built into the bundle.
 
-Routes so far: `/` (restaurant search), `/restaurants/[restaurantId]` (restaurant and ranked menu), `/dishes/[dishId]`, `/login`, `/auth/callback`. Menu discovery controls, rating UI and sharing are later slices.
+Routes so far: `/` (restaurant search), `/restaurants/[restaurantId]` (restaurant and ranked menu; `q`, `category`, `sort` = `top`|`most`|`price`, `page`), `/dishes/[dishId]`, `/login`, `/auth/callback`. Rating UI and sharing are later slices.
 
 ## File map
 

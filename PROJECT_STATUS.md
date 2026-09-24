@@ -1,7 +1,7 @@
 # Forkd project status
 
-Status: Slice 2 implemented; M1–M3 pass locally and against development data. Slice 0 F2 mobile/sign-out/expired-link checks still open.
-Current slice: 2 — Ranked menu (plan approved; implementation complete).
+Status: Slice 3 implemented; D1–D4 pass locally, in isolated DB tests and against development data. Slice 0 F2 mobile/sign-out/expired-link checks still open.
+Current slice: 3 — Menu discovery (plan approved; implementation complete).
 Launch area: Provo, Utah. 10 official-source menus reviewed and seeded (see seed/SOURCE_REVIEW.md).
 Repository: https://github.com/carhorne/forkdmvp
 Development Supabase: tvyzezmbyqszscldrqvi (local, Vercel Preview; labelled test data allowed).
@@ -15,7 +15,7 @@ Vercel: project forkdmvp, https://forkdmvp.vercel.app.
 | 0 Foundation | Manual checks pending | F1, F3, F4 met. F2: desktop magic-link sign-in on production confirmed by owner; mobile, sign-out and expired-link checks blocked by built-in email rate limit. |
 | 1 Restaurant search | Real-phone check pending | R1–R3 pass locally and on the slice-1-search Vercel preview; see Slice 1 evidence. |
 | 2 Ranked menu | Real-phone check pending | M1–M3 pass locally, in isolated DB tests and with labelled test ratings on development; see Slice 2 evidence. |
-| 3 Menu discovery | Pending | — |
+| 3 Menu discovery | Real-phone check pending | D1–D4 pass in DB/unit tests, on development data with the 120-dish fixture, and in Chrome; see Slice 3 evidence. |
 | 4 Ratings | Pending | — |
 | 5 Sharing | Pending | — |
 | 6 Integration/release | Pending | — |
@@ -24,8 +24,22 @@ Vercel: project forkdmvp, https://forkdmvp.vercel.app.
 
 - Accepted product scope: six features in ROADMAP.md; 10–20 manually verified local restaurant menus.
 - Default decisions: 1.0–10.0 tenths; one editable rating/user/dish; email magic links; public saved-rating links without account identity; selected menus labelled honestly.
-- Next action: check Slices 1–2 on a real phone, merge slice-2-menu, finish Slice 0 F2 checks, then plan Slice 3 (menu discovery).
-- Release blockers: F2 remaining checks, custom SMTP sender before testers (built-in limit is 2 emails/hour per project), preview APP_URL, Slices 3–6.
+- Next action: check Slices 1–3 on a real phone, merge slice-3-discovery, finish Slice 0 F2 checks, then plan Slice 4 (ratings).
+- Release blockers: F2 remaining checks, custom SMTP sender before testers (built-in limit is 2 emails/hour per project), preview APP_URL, Slices 4–6.
+
+## Slice 3 evidence — 2026-09-23
+
+Slice and acceptance IDs: 3 / D1–D4.
+Files changed and reason: supabase/migrations/202609230002_menu_page.sql (menu_page RPC: allowlisted sort keys with fixed ORDER BY expressions, literal ILIKE search over name/description, exact category, sort before LIMIT/OFFSET, total_count window, input bounds, execute-only grants, no identity fields); src/lib/menu-params.ts (URL parsing with safe defaults, canonical links); src/lib/catalog.ts (getMenuPage, getMenuCategories; restaurant_menu no longer called); restaurant page (controls, count, clear, pager, empty/too-long/past-end states); menu-controls.tsx (GET form; dropdowns apply on change; canonical navigation; page never submitted); scripts/dev-menu-fixture.ts + `fixture:dev` (development-only, guarded); tests/menu-page.test.ts, tests/menu-params.test.ts, tests/db-helpers.ts; README.
+Commands and actual outcomes: lint, typecheck, `npm test` (86/86), build: pass. Mutation check: flipping Most Rated's count order makes the page-boundary test fail. `supabase db push` of 202609230002 to development: applied. Fixture guard refuses the production env file and the production ref.
+Checks:
+- D1: DB tests: name and description matches, case and outer whitespace ignored, `%`/`_` literal, another restaurant's "Spicy" dish excluded, zero results. Development: Bombay House "chicken" and "  CHICKEN  " → 5; "pad thai" → No dishes match (Spicy Thai does list Pad Thai).
+- D2: DB tests: category AND query narrow the same list with correct total_count. Development: Chicken Specialities + "masala" → Chicken Tikka Masala; Clear returns to the bare URL and resets all controls.
+- D3: DB tests on 120 dishes (duplicate names, tied averages/prices, unrated, unknown prices, one retired): all three sorts equal an independent comparator across pages of 50/50/19. Chrome on the development fixture: each sort walks pages 50/50/20 via Next with 120 unique dishes and ordering holds across page boundaries.
+- D4: unit tests for invalid sort/page/category fallbacks and URL round trip. Chrome: changing sort on page 2 → `?sort=price` (page reset); dropdowns apply immediately; refresh keeps q/category/sort; Back restores the previous URL and control values; page past end offers page 1; invalid params → 200 with defaults.
+- Chrome at 390/320 px: no overflow, all targets ≥ 44 px, no console errors (a duplicate sibling key was found and fixed during testing).
+Database/auth impact: one additive read-only function; no table or policy changes. restaurant_menu is now unused by the app; drop it in a later migration once production runs this slice.
+Remaining issues: real-phone check; Vercel preview check; apply 202609230002 to forkdprod before merging; remove the development fixture after the preview check.
 
 ## Production database switch — 2026-09-23
 

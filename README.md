@@ -73,7 +73,19 @@ npm run fixture:dev -- cleanup --project-ref tvyzezmbyqszscldrqvi
 
 ## Vercel
 
-Project `forkdmvp`, Next.js preset, Node 24. `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are non-sensitive: Production points at forkdprod, Preview at development. `APP_URL` is `https://forkdmvp.vercel.app` for Production. Do not add `SUPABASE_SECRET_KEY`. Each Supabase project's Auth allowlist must contain the exact `/auth/callback` URLs it serves. Redeploy after environment changes; public values are built into the bundle.
+Project `forkdmvp`, Next.js preset, Node 24. `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are non-sensitive: Production points at forkdprod, Preview at development. `APP_URL` is `https://forkdmvp.vercel.app` for Production. Do not add `SUPABASE_SECRET_KEY`. Redeploy after environment changes; public values are built into the bundle.
+
+## Sign-in
+
+Passwordless email: one email carries a code and a link. Both are verified on the server with `verifyOtp` (no PKCE verifier cookie), so they work in whichever browser or device opens the email, including mail apps' in-app browsers. The link opens `/auth/confirm`, which signs in only after a tap so mail scanners cannot use up the token. `/auth/callback` remains for older PKCE emails.
+
+Per Supabase project (Authentication settings):
+
+- Email templates "Magic Link" and "Confirm signup": body from `supabase/templates/sign-in.html`, subject `Your Forkd sign-in code: {{ .Token }}`.
+- Site URL: the app origin without a trailing slash. Redirect allowlist: `<origin>/auth/confirm**` (plus `<origin>/auth/callback` for older emails).
+- Production email: custom SMTP through a Gmail account (`smtp.gmail.com`, port 465, the Gmail address as user, a Google App Password), sender name Forkd; email rate limit raised from the built-in 2/hour. Swap to a domain-based provider (e.g. Resend) once a domain exists.
+
+Rollout order: deploy the app first (so `/auth/confirm` exists), then change the templates and allowlist.
 
 Routes so far: `/` (restaurant search), `/restaurants/[restaurantId]` (restaurant and ranked menu; `q`, `category`, `sort` = `top`|`most`|`price`, `page`), `/dishes/[dishId]` (dish, community rating and the viewer's own rating control), `/login`, `/auth/callback`. Ratings are saved through the `save_rating` RPC (SECURITY INVOKER; session user only; RLS enforces ownership and active dishes). Sharing is a later slice.
 

@@ -39,6 +39,7 @@ Checks (Chrome against development with one temporary test account, deleted afte
 - S3: native share success → "Shared."; AbortError → no message; no share API → clipboard gets "message URL" and "Link copied."; clipboard denied → pre-selected link field.
 - S4: server-rendered title, description, canonical and og:title/description/url/site_name/type on /, restaurant, dish and rating pages, absolute from APP_URL (localhost in local dev; production confirmed after merge). Rating page HTML contains no test email or user ID. Unknown, malformed and quote-injection rating IDs → 404.
 - Chrome at 390/320 px on rating, dish and restaurant pages: no overflow, targets ≥ 44 px, no console errors.
+- Vercel preview (no APP_URL): /, restaurant and dish pages return 200 with titles and no share buttons (as designed); unknown rating → 404.
 Remaining issues: confirm production og:url/canonical/share URLs use https://forkdmvp.vercel.app after merge; owner tries the native share sheet on a phone.
 
 ## Sign-in fix — 2026-09-23

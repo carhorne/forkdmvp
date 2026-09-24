@@ -2,7 +2,7 @@
 
 **Live site:** https://forkdmvp.vercel.app (Vercel project `forkdmvp`, production branch `main`)
 **Release:** v0.1 MVP, Provo, Utah, 10 hand-checked restaurants
-**Released commit:** the `main` merge of `slice-6-release`. Record the hash from `git log -1 origin/main` after merging.
+**Released:** 2026-09-24, commit `6e75000` (merge of `slice-6-release`), deployment `forkdmvp-88wgj8y5k-carhorne.vercel.app`
 **Previous production commit:** `c57fed1` (Slice 5 merge), the rollback target if needed.
 
 ## What is live
@@ -53,6 +53,8 @@ Give this to someone who has not used Forkd. They use their own email and phone.
 8. On the home page tap **Sign out**. Then try an old or already-used code or link: it should say it expired and offer a new code.
 
 Record: tester, device and browser, date, pass/fail per step, anything confusing.
+
+**Result (2026-09-24):** the owner's testers completed the checklist on production and the owner reported it works. Per-tester devices and step notes were not recorded.
 
 ## Known limitations
 

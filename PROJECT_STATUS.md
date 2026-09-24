@@ -1,7 +1,7 @@
 # Forkd project status
 
-Status: Slice 5 implemented; S1–S4 pass locally against development. Production metadata-URL check after merge; owner's native share check on a phone.
-Current slice: 5 — Sharing (plan approved; implementation complete).
+Status: Slice 6 implemented; Q1–Q4 and P1 checked. P2 new-tester run on production pending (owner's testers). See RELEASE.md.
+Current slice: 6 — Integration and release (plan approved; implementation complete).
 Launch area: Provo, Utah. 10 official-source menus reviewed and seeded (see seed/SOURCE_REVIEW.md).
 Repository: https://github.com/carhorne/forkdmvp
 Development Supabase: tvyzezmbyqszscldrqvi (local, Vercel Preview; labelled test data allowed).
@@ -18,15 +18,30 @@ Vercel: project forkdmvp, https://forkdmvp.vercel.app.
 | 3 Menu discovery | Real-phone check pending | D1–D4 pass in DB/unit tests, on development data with the 120-dish fixture, and in Chrome; see Slice 3 evidence. |
 | 4 Ratings | Owner email check + real-phone check pending | T1–T5 pass in DB/unit tests, in Chrome against development with two test sessions, and via direct API calls; see Slice 4 evidence. |
 | 5 Sharing | Production URL + phone share check pending | S1–S4 pass in unit tests and in Chrome against development; see Slice 5 evidence. |
-| 6 Integration/release | Pending | — |
+| 6 Integration/release | P2 tester run pending | Q1–Q4, P1 and P3 done; see Slice 6 evidence and RELEASE.md. |
 
 ## Latest handoff
 
 - Accepted product scope: six features in ROADMAP.md; 10–20 manually verified local restaurant menus.
 - Default decisions: 1.0–10.0 tenths; one editable rating/user/dish; passwordless email sign-in by code or link (changed 2026-09-23 from PKCE magic links, which failed whenever the email opened in a different browser); public saved-rating links without account identity; selected menus labelled honestly.
-- Next action: merge slice-5-sharing, confirm production share/metadata URLs, owner tries native sharing on a phone, then plan Slice 6 (integration and release).
-- Release blockers: Slice 6 (full-journey, accessibility, mobile/error/security checks; P1–P3). Preview APP_URL fallback declined by owner; previews stay browse-only.
+- Next action: merge slice-6-release, record the released commit in RELEASE.md, run the P2 new-tester checklist with the owner's testers, then do the after-release credential rotation.
+- Release blockers: P2 new-tester run. Everything else in the release gate is checked.
 - Sign-in improvements done (code + any-browser link, Gmail SMTP). Swap Gmail for a domain-based provider (e.g. Resend) once a domain is bought.
+
+## Slice 6 evidence — 2026-09-24
+
+Slice and acceptance IDs: 6 / Q1–Q4, P1, P3 (P2 is the owner's testers).
+Owner decisions: keep Vercel Production variables as they are; drop restaurant_menu; commit the e2e tests; launch with 10 restaurants; owner supplies new testers.
+Files changed and reason: tests/e2e/ (Playwright: dev-only harness, full journey, axe WCAG 2.1 AA scan, 320 px, keyboard) + playwright.config.ts + `test:e2e`; @axe-core/playwright 4.13.0 (dev, pinned; lockfile gains only its entry, existing cross-platform entries kept); src/app/pending-hint.tsx (useLinkStatus "Opening…" on restaurant cards and dish rows, keeping real 404s); src/app/icon.svg (favicon; removes the last console 404); smaller h1 for names over 48 characters; supabase/migrations/202609240001_drop_restaurant_menu.sql + tests moved to menu_page + a test that it is gone; dev fixture gains long names; RELEASE.md; README.
+Commands and actual outcomes: lint, typecheck, `npm test` (161/161), build: pass. `npm run test:e2e`: 6 passed, 2 skipped by design (320 px runs at phone size only, keyboard at desktop only); the suite's first runs failed on test-selector issues (a label substring, capital letters, a cold-compile timeout), fixed in the tests, not the app.
+- Q1: journey at 390×844 and 1280×800: search "bomb" → Bombay House → menu search "masala" (3) → category Chicken Specialities (Chicken Tikka Masala) → sort price → clear (10 dishes) → Saag Paneer → signed-out 8.4 → Sign in to rate → /login?next=…#rate → signed in, 8.4 restored and unsaved → Save (8.4, 1 rating) → edit 7.0 (7.0, still 1 rating) → share rating/dish/restaurant with exact texts → dish becomes top of menu → a separate signed-out browser opens all three links (200, right headings, individual score 7.0) → sign out. No console errors. 320 px: no overflow, targets ≥ 44 px on home, restaurant, dish and login.
+- Q2: axe-core (wcag2a/aa, wcag21a/aa) found no violations on home, empty search, restaurant, empty menu search, dish signed out and signed in, login, confirm (valid and incomplete link) and 404, at phone and desktop sizes. Keyboard: skip link first with visible focus; search, result, dish row and rating slider reached and operated by keyboard with visible focus; arrow keys change the score.
+- Q3: slow network (1.5 s latency, 50 KB/s): tapping a restaurant card or dish row shows "Opening…"; changing sort shows "Loading the menu…" (saving shows "Saving…", Slice 4). Database unreachable (dev server with an invalid Supabase URL): home and search show "The menus couldn’t load" with Try again; restaurant, dish and rating pages show "Let’s try that again" with Try again and HTTP 500; sign-in shows "We couldn’t send your sign-in email…" and keeps the email. Long names (fixture) at 320 px: no overflow, no clipped text. Unknown prices: "Price unavailable" (Fat Daddy's). Queries: home 1 bounded select (≤50); restaurant page = restaurant + categories (≤1000 rows) in parallel, then 1 menu_page call (≤50, total by window); dish page 1 dish_detail + own rating; rating page 1 public_rating; no per-dish loops. Indexes: ratings(dish_id), dishes(restaurant_id, is_active, category), restaurants(is_active, name), unique(user_id, dish_id).
+- Q4: none of 8 secret values from .env.local/.env.production.local/.env.db.local appear in `git log -p --all` or `.next/static`; no sb_secret_/JWT/sbp_ patterns in either ("service_role" appears only as the role name in migrations/docs). Production: /, restaurant, dish and login all return `Cache-Control: private, no-cache, no-store` with `x-vercel-cache: MISS`.
+- P1: forkdprod Auth read back: Site URL https://forkdmvp.vercel.app; allowlist /auth/confirm** and /auth/callback; Gmail SMTP 465; 30/hour; templates with code + confirm link. Seed dry-run on production: every location create 0, unchanged 11. Production data: 1 account, 1 rating (owner's), no test accounts. Vercel Production: NEXT_PUBLIC_SUPABASE_URL → forkdprod, APP_URL set. Unused integration variables point at the development project (including its Postgres password and JWT secret); left in place by owner decision and listed in RELEASE.md. Preview uses the development project. Development migrations: all six applied. restaurant_menu drop: applied to development (RPC now 404s) and, after the preview passed, to forkdprod; production migrations: all six applied; live menus unaffected.
+- P3: RELEASE.md records environments, migrations, evidence locations, the P2 tester checklist, known limitations and rollback steps.
+- Vercel preview (slice-6-release): `npm ci` on Linux installed 426 packages from the edited lockfile; /, /icon.svg and a restaurant page return 200.
+Remaining issues: P2 tester run; record the released commit; after-release credential rotation.
 
 ## Slice 5 evidence — 2026-09-24
 

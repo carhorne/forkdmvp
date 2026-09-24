@@ -11,3 +11,5 @@ supabase/.branches/
 test-results/
 .DS_Store
 .env.local
+tests/e2e/.auth/
+playwright-report/

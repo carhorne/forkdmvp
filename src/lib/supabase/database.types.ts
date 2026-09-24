@@ -20,11 +20,6 @@ export type Database = {
     }> };
     Views: { [_ in never]: never };
     Functions: {
-      restaurant_menu: { Args: { p_restaurant_id: string; p_limit?: number; p_offset?: number }; Returns: {
-        id: string; restaurant_id: string; name: string; category: string; description: string | null;
-        price_cents: number | null; currency: string; source_url: string; source_checked_at: string;
-        average_score: number | null; rating_count: number;
-      }[] };
       public_rating: { Args: { p_rating_id: string }; Returns: {
         id: string; dish_id: string; score: number; updated_at: string; dish_name: string;
         restaurant_id: string; restaurant_name: string; restaurant_address: string;

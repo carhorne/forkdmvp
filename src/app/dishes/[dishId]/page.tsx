@@ -29,7 +29,7 @@ export default async function DishPage({ params }: Props) {
     <p className="back"><Link href={`/restaurants/${dish.restaurant_id}`}>← {dish.restaurant_name}</Link></p>
     <section className="hero">
       <p className="eyebrow">{dish.category}</p>
-      <h1>{dish.name}</h1>
+      <h1 className={dish.name.length > 48 ? "title-long" : undefined}>{dish.name}</h1>
       <p className="address">
         <Link href={`/restaurants/${dish.restaurant_id}`}>{dish.restaurant_name}</Link><br />
         {dish.restaurant_address}, {dish.restaurant_city}, {dish.restaurant_region}

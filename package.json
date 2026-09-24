@@ -15,6 +15,7 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:db": "vitest run tests/database.test.ts",
+    "test:e2e": "playwright test",
     "seed:validate": "tsx scripts/seed/cli.ts validate",
     "seed:dry-run": "tsx scripts/seed/cli.ts dry-run",
     "seed:apply": "tsx scripts/seed/cli.ts apply",
@@ -30,6 +31,7 @@
     "zod": "4.6.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
     "@electric-sql/pglite": "0.5.8",
     "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "4.3.3",

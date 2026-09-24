@@ -6,7 +6,9 @@ import { getMenuCategories, getMenuPage, getRestaurant } from "@/lib/catalog";
 import { formatCheckedDate, formatPrice } from "@/lib/format";
 import { MENU_PAGE_SIZE, menuHref, parseMenuParams, type MenuParams } from "@/lib/menu-params";
 import { isUuid, MAX_QUERY_LENGTH } from "@/lib/search";
+import { pageMetadata, restaurantPath, restaurantShare, restaurantShareText } from "@/lib/share";
 import { RetryButton } from "@/app/retry-button";
+import { ShareButton } from "@/app/share-button";
 import { ScoreBadge } from "@/app/score-badge";
 import { MenuControls } from "./menu-controls";
 
@@ -16,7 +18,9 @@ const load = cache(getRestaurant);
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const restaurant = await load((await params).restaurantId);
-  return { title: restaurant ? `${restaurant.name} — Forkd` : "Not found — Forkd" };
+  if (!restaurant) return { title: "Not found — Forkd" };
+  const t = restaurantShareText(restaurant);
+  return pageMetadata({ title: restaurant.name, description: `${t.text} ${restaurant.menu_coverage === "selected" ? "A selected, source-checked menu" : "A source-checked menu"} with community dish ratings.`, path: restaurantPath(restaurant.id) });
 }
 
 export const dynamic = "force-dynamic";
@@ -27,6 +31,7 @@ export default async function RestaurantPage({ params, searchParams }: Props) {
   const [restaurant, categories] = await Promise.all([load(id), isUuid(id) ? getMenuCategories(id).catch(() => null) : null]);
   if (!restaurant) notFound();
   const parsed = parseMenuParams(await searchParams);
+  const share = restaurantShare(restaurant);
   // A category that isn't on this menu falls back to All.
   const menu: MenuParams = { ...parsed, category: parsed.category && categories?.includes(parsed.category) ? parsed.category : null };
   return <>
@@ -36,6 +41,7 @@ export default async function RestaurantPage({ params, searchParams }: Props) {
       <h1>{restaurant.name}</h1>
       <p className="address">{restaurant.address}<br />{restaurant.city}, {restaurant.region}</p>
       {!restaurant.is_active && <p className="status">This restaurant is no longer in Forkd’s current collection.</p>}
+      {share && <ShareButton share={share} label="Share this restaurant" />}
     </section>
     <section aria-labelledby="menu-title">
       <div className="section-bar"><h2 id="menu-title">The menu</h2><span className="count">{restaurant.menu_coverage === "selected" ? "SELECTED MENU" : "FULL MENU"}</span></div>

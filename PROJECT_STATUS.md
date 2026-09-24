@@ -1,7 +1,7 @@
 # Forkd project status
 
-Status: Slice 4 implemented; T1–T5 pass in DB/unit tests and against development with test sessions. Owner's real email round trip for T1 pending. Slice 0 F2 mobile/sign-out/expired-link checks still open.
-Current slice: 4 — Ratings (plan approved; implementation complete).
+Status: Slice 5 implemented; S1–S4 pass locally against development. Production metadata-URL check after merge; owner's native share check on a phone.
+Current slice: 5 — Sharing (plan approved; implementation complete).
 Launch area: Provo, Utah. 10 official-source menus reviewed and seeded (see seed/SOURCE_REVIEW.md).
 Repository: https://github.com/carhorne/forkdmvp
 Development Supabase: tvyzezmbyqszscldrqvi (local, Vercel Preview; labelled test data allowed).
@@ -17,23 +17,42 @@ Vercel: project forkdmvp, https://forkdmvp.vercel.app.
 | 2 Ranked menu | Real-phone check pending | M1–M3 pass locally, in isolated DB tests and with labelled test ratings on development; see Slice 2 evidence. |
 | 3 Menu discovery | Real-phone check pending | D1–D4 pass in DB/unit tests, on development data with the 120-dish fixture, and in Chrome; see Slice 3 evidence. |
 | 4 Ratings | Owner email check + real-phone check pending | T1–T5 pass in DB/unit tests, in Chrome against development with two test sessions, and via direct API calls; see Slice 4 evidence. |
-| 5 Sharing | Pending | — |
+| 5 Sharing | Production URL + phone share check pending | S1–S4 pass in unit tests and in Chrome against development; see Slice 5 evidence. |
 | 6 Integration/release | Pending | — |
 
 ## Latest handoff
 
 - Accepted product scope: six features in ROADMAP.md; 10–20 manually verified local restaurant menus.
 - Default decisions: 1.0–10.0 tenths; one editable rating/user/dish; passwordless email sign-in by code or link (changed 2026-09-23 from PKCE magic links, which failed whenever the email opened in a different browser); public saved-rating links without account identity; selected menus labelled honestly.
-- Next action: owner tests the real magic-link rating round trip and phone layout, merge slice-4-ratings, then the sign-in improvements (email code + custom SMTP), then plan Slice 5 (sharing).
-- Release blockers: F2 remaining checks, custom SMTP sender before testers (built-in limit is 2 emails/hour per project), preview APP_URL, Slices 5–6.
-- Planned after Slice 4 (owner-approved): sign-in improvements — 6-digit email code alongside the magic link (fixes links opening in a different in-app browser) and Resend custom SMTP on both projects once a domain exists.
+- Next action: merge slice-5-sharing, confirm production share/metadata URLs, owner tries native sharing on a phone, then plan Slice 6 (integration and release).
+- Release blockers: Slice 6 (full-journey, accessibility, mobile/error/security checks; P1–P3). Preview APP_URL fallback declined by owner; previews stay browse-only.
+- Sign-in improvements done (code + any-browser link, Gmail SMTP). Swap Gmail for a domain-based provider (e.g. Resend) once a domain is bought.
+
+## Slice 5 evidence — 2026-09-24
+
+Slice and acceptance IDs: 5 / S1–S4.
+Files changed and reason: src/lib/share.ts (server-built share targets and page metadata from APP_URL; null where no origin, so no localhost/preview links), src/app/share-button.tsx (Web Share → clipboard → selectable link; cancel shows nothing; feedback only on success), src/app/ratings/[ratingId]/page.tsx (public individual rating via existing public_rating RPC, 404 for unknown/malformed IDs, retired notes), layout metadataBase, per-page title/description/canonical/Open Graph for /, restaurants, dishes, ratings; share buttons on restaurant, dish and (saved rating only) rating form; catalog getPublicRating; tests/share.test.ts; README. No database changes.
+Commands and actual outcomes: lint, typecheck, `npm test` (160/160), build: pass.
+Checks (Chrome against development with one temporary test account, deleted afterwards; development ratings back to 0):
+- S1: restaurant share → "Bombay House on Forkd" / "See what to order at Bombay House (463 N University Ave, Provo) on Forkd." + /restaurants/<id>; dish share → "Saag Paneer at Bombay House on Forkd. No ratings yet." + /dishes/<id>; both URLs return 200 with the right heading in a fresh signed-out browser. Unit tests cover rated/unrated wording (never 0/10) and APP_URL use.
+- S2: no "Share my rating" before saving; after saving 7.5 and moving the slider to an unsaved 9.0, the share says 7.5 with /ratings/<id>; a signed-out browser sees "An individual rating 7.5", dish, restaurant and date; after editing to 6.0 the same URL shows 6.0.
+- S3: native share success → "Shared."; AbortError → no message; no share API → clipboard gets "message URL" and "Link copied."; clipboard denied → pre-selected link field.
+- S4: server-rendered title, description, canonical and og:title/description/url/site_name/type on /, restaurant, dish and rating pages, absolute from APP_URL (localhost in local dev; production confirmed after merge). Rating page HTML contains no test email or user ID. Unknown, malformed and quote-injection rating IDs → 404.
+- Chrome at 390/320 px on rating, dish and restaurant pages: no overflow, targets ≥ 44 px, no console errors.
+- Vercel preview (no APP_URL): /, restaurant and dish pages return 200 with titles and no share buttons (as designed); unknown rating → 404.
+Remaining issues: confirm production og:url/canonical/share URLs use https://forkdmvp.vercel.app after merge; owner tries the native share sheet on a phone.
 
 ## Sign-in fix — 2026-09-23
 
 Problem: production logs showed every attempt as POST /login → GET /auth/callback about 10 s later → GET /login (error). The PKCE magic link needs a verifier cookie from the requesting browser; mail apps open links in a different (often in-app) browser, so exchange always failed. Separately, the built-in sender allows 2 emails/hour per project.
 Change: one email with a code and a link, both verified server-side with verifyOtp (email+code, or token_hash). New /auth/confirm page needs a tap before verifying (scanner-safe) and derives the return path only from a same-origin redirect_to. Login shows a code step with resend and change-email; auth errors are mapped (429/over_* → wait message). supabase/templates/sign-in.html is the shared template. No database changes.
 Checks (development, admin-generated tokens so no email was sent; test user deleted afterwards): code — wrong code rejected, correct code creates the @supabase/ssr session cookie, reuse rejected; development codes are 8 digits, so copy says "code" and parsing accepts 6–10 digits. Link — opened in a fresh browser that never requested it: confirm page does not sign in until tapped, then lands on /dishes/<id>#rate signed in with "Save rating"; reused link → /login?error=link with recovery text; a scanner-style visit does not consume the token; bogus token → login error; wrong type → "This link isn’t complete"; foreign-origin redirect_to → lands on /. Unit tests for code, token, type and redirect parsing. lint, typecheck, `npm test` (153/153), build: pass. 390/320 px: no overflow, targets ≥ 44 px, no console errors.
-Remaining: Gmail sender is forkd.app.official@gmail.com (App Password in .env.db.local); apply templates, allowlist, SMTP and rate limit to forkdprod right after this branch reaches production; owner's real-email test on a phone.
+Configuration applied 2026-09-24 via the Supabase Management API (personal access token in .env.db.local). Free-tier projects reject template edits on the built-in sender, so custom SMTP had to be set first.
+- forkdprod: SMTP smtp.gmail.com:465 as forkd.app.official@gmail.com (Google App Password), sender "Forkd", email limit 2/h → 30/h; Magic Link and Confirm signup use supabase/templates/sign-in.html with subject "Your Forkd sign-in code: {{ .Token }}"; allowlist https://forkdmvp.vercel.app/auth/confirm** and /auth/callback; Site URL unchanged. All values read back correctly.
+- development: same SMTP, limit and templates; Site URL http://localhost:3000; allowlist localhost /auth/confirm** and /auth/callback plus the existing forkdmvp-carhorne preview patterns (closes the missing-localhost item).
+- Test send through development to the Forkd Gmail address: /otp 200 in development auth logs (a Gmail rejection would fail the request). This created a development-only user for that address.
+- Codes are 8 digits in both projects (mailer_otp_length 8).
+Remaining: owner's real-email test on production (type the code, and tap the link on the phone); the Gmail account's daily sending limit (~500) now caps sign-in emails across both projects.
 
 ## Slice 4 evidence — 2026-09-23
 

@@ -87,7 +87,9 @@ Per Supabase project (Authentication settings):
 
 Rollout order: deploy the app first (so `/auth/confirm` exists), then change the templates and allowlist.
 
-Routes so far: `/` (restaurant search), `/restaurants/[restaurantId]` (restaurant and ranked menu; `q`, `category`, `sort` = `top`|`most`|`price`, `page`), `/dishes/[dishId]` (dish, community rating and the viewer's own rating control), `/login`, `/auth/callback`. Ratings are saved through the `save_rating` RPC (SECURITY INVOKER; session user only; RLS enforces ownership and active dishes). Sharing is a later slice.
+Routes so far: `/` (restaurant search), `/restaurants/[restaurantId]` (restaurant and ranked menu; `q`, `category`, `sort` = `top`|`most`|`price`, `page`), `/dishes/[dishId]` (dish, community rating and the viewer's own rating control), `/login`, `/auth/callback`. Ratings are saved through the `save_rating` RPC (SECURITY INVOKER; session user only; RLS enforces ownership and active dishes). `/ratings/[ratingId]` shows one saved score publicly (via `public_rating`, no account fields); the ID survives edits, so shared links always show the current score.
+
+Sharing: restaurant, dish and saved-rating Share buttons use the native share sheet when available, else copy the message and link, else show a selectable link. Share URLs and canonical/Open Graph metadata are built on the server from `APP_URL`; where it is not set (previews) share buttons are hidden.
 
 ## File map
 

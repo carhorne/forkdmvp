@@ -40,8 +40,9 @@ Checks (development, two temporary password test accounts signed in via real @su
 - T4: DB test and 10 concurrent API saves with A's JWT → one row, one ID, no errors. Aborted request → "We couldn’t reach Forkd…", input 7.7 kept, no row change, no success. Button disabled with "Saving…" while in flight. Menu and dish aggregates refresh after save.
 - T5: DB tests plus live API: anon save_rating/insert → 42501, anon ratings read denied; B cannot read or update A's row, cannot insert as A or edit catalog; A cannot change user_id/dish_id; public dish projection has no user/email/token fields. Retired dishes reject new and edited ratings (DB tests) and the page hides the control.
 - Chrome at 390/320 px signed in and out: no overflow, all targets ≥ 44 px, no console errors.
-Database/auth impact: one additive SECURITY INVOKER function; no table or policy changes.
-Remaining issues: owner's real email round trip; real-phone check; Vercel preview check; apply 202609230003 to forkdprod before merging. Local dev must be opened as http://localhost (Next.js blocks dev resources for 127.0.0.1 unless allowedDevOrigins is set).
+- Vercel preview (slice-4-ratings, via `vercel curl`): dish page renders the signed-out form (slider, number box, public-score notice, "Sign in to rate"). Signing in on previews is not possible until preview APP_URL is set.
+Database/auth impact: one additive SECURITY INVOKER function; no table or policy changes. Applied to development and, after the preview passed, to forkdprod (anon call → 401 "permission denied for function save_rating"; production ratings: 0). CLI relinked to development.
+Remaining issues: owner's real email round trip; real-phone check. Local dev must be opened as http://localhost (Next.js blocks dev resources for 127.0.0.1 unless allowedDevOrigins is set).
 
 ## Slice 3 evidence — 2026-09-23
 

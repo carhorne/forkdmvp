@@ -56,6 +56,14 @@ h1 { font-family: Georgia, serif; font-size: clamp(42px, 8vw, 68px); line-height
 .control { flex: 1 1 140px; min-width: 0; display: grid; gap: 8px; }
 select { font: inherit; width: 100%; min-height: 48px; padding: 10px 12px; border: 1px solid #808b7d; border-radius: 6px; background: white; color: var(--ink); }
 .pager { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 24px; }
+.rating-form { display: grid; gap: 10px; }
+.rating-form h2 { font: 24px Georgia, serif; margin: 0; }
+.rating-form input[type="number"] { margin-bottom: 0; max-width: 160px; }
+.rating-form button { width: 100%; }
+.score-entry { display: flex; align-items: baseline; gap: 8px; }
+.score-display { font: 700 48px/1 Georgia, serif; }
+input[type="range"] { width: 100%; min-height: 44px; margin: 0; padding: 0; border: 0; background: transparent; accent-color: var(--accent); }
+.status.error { border-left-color: #a3261b; background: #f6e3df; }
 .nowrap { white-space: nowrap; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .provenance { border-top: 1px solid #e1e2d9; padding-top: 14px; margin-bottom: 0; font-size: 12px; }

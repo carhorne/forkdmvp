@@ -1,7 +1,7 @@
 # Forkd project status
 
-Status: Slice 3 implemented; D1–D4 pass locally, in isolated DB tests and against development data. Slice 0 F2 mobile/sign-out/expired-link checks still open.
-Current slice: 3 — Menu discovery (plan approved; implementation complete).
+Status: Slice 4 implemented; T1–T5 pass in DB/unit tests and against development with test sessions. Owner's real email round trip for T1 pending. Slice 0 F2 mobile/sign-out/expired-link checks still open.
+Current slice: 4 — Ratings (plan approved; implementation complete).
 Launch area: Provo, Utah. 10 official-source menus reviewed and seeded (see seed/SOURCE_REVIEW.md).
 Repository: https://github.com/carhorne/forkdmvp
 Development Supabase: tvyzezmbyqszscldrqvi (local, Vercel Preview; labelled test data allowed).
@@ -16,7 +16,7 @@ Vercel: project forkdmvp, https://forkdmvp.vercel.app.
 | 1 Restaurant search | Real-phone check pending | R1–R3 pass locally and on the slice-1-search Vercel preview; see Slice 1 evidence. |
 | 2 Ranked menu | Real-phone check pending | M1–M3 pass locally, in isolated DB tests and with labelled test ratings on development; see Slice 2 evidence. |
 | 3 Menu discovery | Real-phone check pending | D1–D4 pass in DB/unit tests, on development data with the 120-dish fixture, and in Chrome; see Slice 3 evidence. |
-| 4 Ratings | Pending | — |
+| 4 Ratings | Owner email check + real-phone check pending | T1–T5 pass in DB/unit tests, in Chrome against development with two test sessions, and via direct API calls; see Slice 4 evidence. |
 | 5 Sharing | Pending | — |
 | 6 Integration/release | Pending | — |
 
@@ -24,8 +24,25 @@ Vercel: project forkdmvp, https://forkdmvp.vercel.app.
 
 - Accepted product scope: six features in ROADMAP.md; 10–20 manually verified local restaurant menus.
 - Default decisions: 1.0–10.0 tenths; one editable rating/user/dish; email magic links; public saved-rating links without account identity; selected menus labelled honestly.
-- Next action: check Slices 1–3 on a real phone, merge slice-3-discovery, finish Slice 0 F2 checks, then plan Slice 4 (ratings).
-- Release blockers: F2 remaining checks, custom SMTP sender before testers (built-in limit is 2 emails/hour per project), preview APP_URL, Slices 4–6.
+- Next action: owner tests the real magic-link rating round trip and phone layout, merge slice-4-ratings, then the sign-in improvements (email code + custom SMTP), then plan Slice 5 (sharing).
+- Release blockers: F2 remaining checks, custom SMTP sender before testers (built-in limit is 2 emails/hour per project), preview APP_URL, Slices 5–6.
+- Planned after Slice 4 (owner-approved): sign-in improvements — 6-digit email code alongside the magic link (fixes links opening in a different in-app browser) and Resend custom SMTP on both projects once a domain exists.
+
+## Slice 4 evidence — 2026-09-23
+
+Slice and acceptance IDs: 4 / T1–T5.
+Files changed and reason: supabase/migrations/202609230003_save_rating.sql (SECURITY INVOKER upsert on the (user_id, dish_id) key; user from auth.uid(); authenticated-only execute; all existing RLS, column grants, CHECK and identity trigger apply); src/lib/score.ts (strict text tenths, no rounding); src/app/dishes/[dishId]/actions.ts (session check, RPC, error mapping, revalidate dish and restaurant pages); rating-form.tsx (slider + number box, public-score notice, draft kept only in localStorage for 1 hour, explicit submit, pending/disabled, error keeps input, network failure caught); dish page (own rating via RLS, closed state for retired dishes); catalog getOwnRating; database types; tests/ratings.test.ts, tests/score.test.ts; README.
+Commands and actual outcomes: lint, typecheck, `npm test` (132/132), build: pass. `supabase db push` of 202609230003 to development: applied.
+Checks (development, two temporary password test accounts signed in via real @supabase/ssr session cookies; accounts and ratings deleted afterwards, development ratings back to 0; harness not committed):
+- T1: logged out, set 8.4 → "Sign in to rate" → /login?next=/dishes/<id>#rate; returning signed in restores 8.4 with a "press Save" note and no row exists; Save → row 8.4; draft cleared. The email hop itself is the owner's manual check.
+- T2: DB tests reject 0, 10.1, 9.25, NaN, ±Infinity, -1, null and keep rows unchanged; 1.0, 9.2, 10.0 persist exactly. Unit tests cover 30 accepted/rejected strings. Browser with client validation removed: 9.25, 0, 10.1, NaN, abc, blank → server message, row unchanged; 1.0, 9.2, 10.0 save with the same rating ID.
+- T3: A 8.0 + B 10.0 → dish shows 9.0 / 2; A updates to 6.0 → 8.0 / 2; A's rating ID unchanged; refresh confirms; restaurant menu shows the dish first at 8.0.
+- T4: DB test and 10 concurrent API saves with A's JWT → one row, one ID, no errors. Aborted request → "We couldn’t reach Forkd…", input 7.7 kept, no row change, no success. Button disabled with "Saving…" while in flight. Menu and dish aggregates refresh after save.
+- T5: DB tests plus live API: anon save_rating/insert → 42501, anon ratings read denied; B cannot read or update A's row, cannot insert as A or edit catalog; A cannot change user_id/dish_id; public dish projection has no user/email/token fields. Retired dishes reject new and edited ratings (DB tests) and the page hides the control.
+- Chrome at 390/320 px signed in and out: no overflow, all targets ≥ 44 px, no console errors.
+- Vercel preview (slice-4-ratings, via `vercel curl`): dish page renders the signed-out form (slider, number box, public-score notice, "Sign in to rate"). Signing in on previews is not possible until preview APP_URL is set.
+Database/auth impact: one additive SECURITY INVOKER function; no table or policy changes. Applied to development and, after the preview passed, to forkdprod (anon call → 401 "permission denied for function save_rating"; production ratings: 0). CLI relinked to development.
+Remaining issues: owner's real email round trip; real-phone check. Local dev must be opened as http://localhost (Next.js blocks dev resources for 127.0.0.1 unless allowedDevOrigins is set).
 
 ## Slice 3 evidence — 2026-09-23
 

@@ -75,7 +75,7 @@ npm run fixture:dev -- cleanup --project-ref tvyzezmbyqszscldrqvi
 
 Project `forkdmvp`, Next.js preset, Node 24. `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are non-sensitive: Production points at forkdprod, Preview at development. `APP_URL` is `https://forkdmvp.vercel.app` for Production. Do not add `SUPABASE_SECRET_KEY`. Each Supabase project's Auth allowlist must contain the exact `/auth/callback` URLs it serves. Redeploy after environment changes; public values are built into the bundle.
 
-Routes so far: `/` (restaurant search), `/restaurants/[restaurantId]` (restaurant and ranked menu; `q`, `category`, `sort` = `top`|`most`|`price`, `page`), `/dishes/[dishId]`, `/login`, `/auth/callback`. Rating UI and sharing are later slices.
+Routes so far: `/` (restaurant search), `/restaurants/[restaurantId]` (restaurant and ranked menu; `q`, `category`, `sort` = `top`|`most`|`price`, `page`), `/dishes/[dishId]` (dish, community rating and the viewer's own rating control), `/login`, `/auth/callback`. Ratings are saved through the `save_rating` RPC (SECURITY INVOKER; session user only; RLS enforces ownership and active dishes). Sharing is a later slice.
 
 ## File map
 

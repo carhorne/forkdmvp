@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
-import { getDish } from "@/lib/catalog";
+import { getDish, getOwnRating } from "@/lib/catalog";
 import { formatCheckedDate, formatPrice } from "@/lib/format";
 import { ScoreBadge } from "@/app/score-badge";
+import { RatingForm } from "./rating-form";
 
 type Props = { params: Promise<{ dishId: string }> };
 // Metadata and page share one database request per render.
@@ -35,8 +36,22 @@ export default async function DishPage({ params }: Props) {
       <div className="fact"><span className="fact-label">Community rating</span><ScoreBadge average={dish.average_score} count={dish.rating_count} large /></div>
       <div className="fact"><span className="fact-label">Price</span><span className="fact-value">{formatPrice(dish.price_cents, dish.currency)}</span></div>
       {dish.description && <p className="dish-desc">{dish.description}</p>}
+      <div className="fact" id="rate">
+        {dish.is_active && dish.restaurant_is_active
+          ? <RatingSection dishId={dish.id} />
+          : <p className="muted">Ratings are closed because this dish is no longer on the current menu.</p>}
+      </div>
       <p className="provenance">From the restaurant’s menu, checked {formatCheckedDate(dish.source_checked_at)}.<br />
         <a href={dish.source_url} target="_blank" rel="noopener noreferrer">Restaurant’s menu source ↗</a> · Menus and prices may change.</p>
     </section>
   </>;
+}
+
+async function RatingSection({ dishId }: { dishId: string }) {
+  let own: Awaited<ReturnType<typeof getOwnRating>>;
+  try { own = await getOwnRating(dishId); } catch {
+    return <div className="notice" role="alert"><p>Your rating couldn’t load. Please refresh to try again.</p></div>;
+  }
+  const saved = own.rating ? Number(own.rating.score).toFixed(1) : null;
+  return <RatingForm dishId={dishId} signedIn={own.signedIn} savedScore={saved} />;
 }

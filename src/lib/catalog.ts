@@ -48,6 +48,17 @@ export async function getMenuCategories(restaurantId: string) {
   return [...new Set(data.map((d) => d.category))].sort((a, b) => a.localeCompare(b));
 }
 
+// The signed-in viewer's own rating for a dish (RLS returns only their row). Never cached across users.
+export async function getOwnRating(dishId: string) {
+  const client = await createClient();
+  const { data: claims } = await client.auth.getClaims();
+  const userId = claims?.claims?.sub;
+  if (!userId) return { signedIn: false as const, rating: null };
+  const { data, error } = await client.from("ratings").select("id,score,updated_at").eq("dish_id", dishId).eq("user_id", userId).maybeSingle();
+  if (error) throw new Error("Your rating couldn’t load");
+  return { signedIn: true as const, rating: data };
+}
+
 // Public dish by stable ID, including retired dishes so old links keep working. Null means 404.
 export async function getDish(id: string) {
   if (!isUuid(id)) return null;

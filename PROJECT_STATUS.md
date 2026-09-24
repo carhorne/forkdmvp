@@ -1,7 +1,7 @@
 # Forkd project status
 
-Status: Slice 6 implemented; Q1–Q4 and P1 checked. P2 new-tester run on production pending (owner's testers). See RELEASE.md.
-Current slice: 6 — Integration and release (plan approved; implementation complete).
+Status: MVP released 2026-09-24 (commit 6e75000). All slices and the release gate complete. See RELEASE.md.
+Current slice: none. Post-release follow-ups only.
 Launch area: Provo, Utah. 10 official-source menus reviewed and seeded (see seed/SOURCE_REVIEW.md).
 Repository: https://github.com/carhorne/forkdmvp
 Development Supabase: tvyzezmbyqszscldrqvi (local, Vercel Preview; labelled test data allowed).
@@ -12,20 +12,20 @@ Vercel: project forkdmvp, https://forkdmvp.vercel.app.
 
 | Slice | State | Evidence |
 |---|---|---|
-| 0 Foundation | Manual checks pending | F1, F3, F4 met. F2: desktop magic-link sign-in on production confirmed by owner; mobile, sign-out and expired-link checks blocked by built-in email rate limit. |
-| 1 Restaurant search | Real-phone check pending | R1–R3 pass locally and on the slice-1-search Vercel preview; see Slice 1 evidence. |
-| 2 Ranked menu | Real-phone check pending | M1–M3 pass locally, in isolated DB tests and with labelled test ratings on development; see Slice 2 evidence. |
-| 3 Menu discovery | Real-phone check pending | D1–D4 pass in DB/unit tests, on development data with the 120-dish fixture, and in Chrome; see Slice 3 evidence. |
-| 4 Ratings | Owner email check + real-phone check pending | T1–T5 pass in DB/unit tests, in Chrome against development with two test sessions, and via direct API calls; see Slice 4 evidence. |
-| 5 Sharing | Production URL + phone share check pending | S1–S4 pass in unit tests and in Chrome against development; see Slice 5 evidence. |
-| 6 Integration/release | P2 tester run pending | Q1–Q4, P1 and P3 done; see Slice 6 evidence and RELEASE.md. |
+| 0 Foundation | Done | F1–F4 met. F2 completed after the sign-in fix: code and link sign-in on phones, sign-out and expired/used-link recovery checked by the owner and testers on production. |
+| 1 Restaurant search | Done | R1–R3 pass locally and on the slice-1-search Vercel preview; see Slice 1 evidence. |
+| 2 Ranked menu | Done | M1–M3 pass locally, in isolated DB tests and with labelled test ratings on development; see Slice 2 evidence. |
+| 3 Menu discovery | Done | D1–D4 pass in DB/unit tests, on development data with the 120-dish fixture, and in Chrome; see Slice 3 evidence. |
+| 4 Ratings | Done | T1–T5 pass in DB/unit tests, in Chrome against development with two test sessions, and via direct API calls; owner confirmed the real email round trip on production; see Slice 4 evidence. |
+| 5 Sharing | Done | S1–S4 pass in unit tests and in Chrome against development; see Slice 5 evidence. |
+| 6 Integration/release | Done | Q1–Q4, P1–P3 met; P2 run by the owner's testers on production. |
 
 ## Latest handoff
 
 - Accepted product scope: six features in ROADMAP.md; 10–20 manually verified local restaurant menus.
 - Default decisions: 1.0–10.0 tenths; one editable rating/user/dish; passwordless email sign-in by code or link (changed 2026-09-23 from PKCE magic links, which failed whenever the email opened in a different browser); public saved-rating links without account identity; selected menus labelled honestly.
-- Next action: merge slice-6-release, record the released commit in RELEASE.md, run the P2 new-tester checklist with the owner's testers, then do the after-release credential rotation.
-- Release blockers: P2 new-tester run. Everything else in the release gate is checked.
+- Next action: after-release credential rotation (RELEASE.md). Future ideas stay parked until the MVP has been used; see ROADMAP.md non-goals.
+- Release blockers: none.
 - Sign-in improvements done (code + any-browser link, Gmail SMTP). Swap Gmail for a domain-based provider (e.g. Resend) once a domain is bought.
 
 ## Slice 6 evidence — 2026-09-24
@@ -41,7 +41,8 @@ Commands and actual outcomes: lint, typecheck, `npm test` (161/161), build: pass
 - P1: forkdprod Auth read back: Site URL https://forkdmvp.vercel.app; allowlist /auth/confirm** and /auth/callback; Gmail SMTP 465; 30/hour; templates with code + confirm link. Seed dry-run on production: every location create 0, unchanged 11. Production data: 1 account, 1 rating (owner's), no test accounts. Vercel Production: NEXT_PUBLIC_SUPABASE_URL → forkdprod, APP_URL set. Unused integration variables point at the development project (including its Postgres password and JWT secret); left in place by owner decision and listed in RELEASE.md. Preview uses the development project. Development migrations: all six applied. restaurant_menu drop: applied to development (RPC now 404s) and, after the preview passed, to forkdprod; production migrations: all six applied; live menus unaffected.
 - P3: RELEASE.md records environments, migrations, evidence locations, the P2 tester checklist, known limitations and rollback steps.
 - Vercel preview (slice-6-release): `npm ci` on Linux installed 426 packages from the edited lockfile; /, /icon.svg and a restaurant page return 200.
-Remaining issues: P2 tester run; record the released commit; after-release credential rotation.
+- P2: the owner's testers completed the RELEASE.md checklist on production (reported working, 2026-09-24). Released commit 6e75000, deployment forkdmvp-88wgj8y5k-carhorne.vercel.app.
+Remaining issues: after-release credential rotation.
 
 ## Slice 5 evidence — 2026-09-24
 

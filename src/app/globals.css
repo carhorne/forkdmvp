@@ -88,3 +88,9 @@ footer span { font-size: 11px; }
 .login-secondary button { flex: 1 1 160px; width: auto; }
 button.secondary { background: transparent; color: var(--ink); border: 1px solid #808b7d; }
 .code-input { font-size: 28px; letter-spacing: 6px; font-variant-numeric: tabular-nums; max-width: 240px; }
+.share { display: grid; gap: 8px; margin-top: 12px; justify-items: start; }
+.share button { width: auto; }
+.share-note { margin: 0; font-size: 14px; color: var(--muted); }
+.share-manual { display: grid; gap: 6px; width: 100%; }
+.share-manual label { font-weight: 700; }
+.share-manual input { margin-bottom: 0; font-size: 15px; }

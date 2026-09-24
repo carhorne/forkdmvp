@@ -6,7 +6,10 @@ import { searchRestaurants } from "@/lib/catalog";
 import { MAX_QUERY_LENGTH, parseRestaurantQuery, type RestaurantQuery } from "@/lib/search";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "./login/actions";
+import { pageMetadata } from "@/lib/share";
 import { RetryButton } from "./retry-button";
+
+export const metadata = pageMetadata({ title: "Know what to order", description: "Search a small, hand-checked collection of Provo restaurant menus, see which dishes diners rate highest, and rate what you ate.", path: "/" });
 
 export const dynamic = "force-dynamic";
 export default async function Home({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {

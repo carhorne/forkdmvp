@@ -1,7 +1,7 @@
 # Forkd project status
 
-Status: Slice 4 implemented; T1–T5 pass in DB/unit tests and against development with test sessions. Owner's real email round trip for T1 pending. Slice 0 F2 mobile/sign-out/expired-link checks still open.
-Current slice: 4 — Ratings (plan approved; implementation complete).
+Status: Slice 5 implemented; S1–S4 pass locally against development. Production metadata-URL check after merge; owner's native share check on a phone.
+Current slice: 5 — Sharing (plan approved; implementation complete).
 Launch area: Provo, Utah. 10 official-source menus reviewed and seeded (see seed/SOURCE_REVIEW.md).
 Repository: https://github.com/carhorne/forkdmvp
 Development Supabase: tvyzezmbyqszscldrqvi (local, Vercel Preview; labelled test data allowed).
@@ -17,16 +17,29 @@ Vercel: project forkdmvp, https://forkdmvp.vercel.app.
 | 2 Ranked menu | Real-phone check pending | M1–M3 pass locally, in isolated DB tests and with labelled test ratings on development; see Slice 2 evidence. |
 | 3 Menu discovery | Real-phone check pending | D1–D4 pass in DB/unit tests, on development data with the 120-dish fixture, and in Chrome; see Slice 3 evidence. |
 | 4 Ratings | Owner email check + real-phone check pending | T1–T5 pass in DB/unit tests, in Chrome against development with two test sessions, and via direct API calls; see Slice 4 evidence. |
-| 5 Sharing | Pending | — |
+| 5 Sharing | Production URL + phone share check pending | S1–S4 pass in unit tests and in Chrome against development; see Slice 5 evidence. |
 | 6 Integration/release | Pending | — |
 
 ## Latest handoff
 
 - Accepted product scope: six features in ROADMAP.md; 10–20 manually verified local restaurant menus.
 - Default decisions: 1.0–10.0 tenths; one editable rating/user/dish; passwordless email sign-in by code or link (changed 2026-09-23 from PKCE magic links, which failed whenever the email opened in a different browser); public saved-rating links without account identity; selected menus labelled honestly.
-- Next action: owner tests the real magic-link rating round trip and phone layout, merge slice-4-ratings, then the sign-in improvements (email code + custom SMTP), then plan Slice 5 (sharing).
-- Release blockers: F2 remaining checks (now testable: 30 emails/hour through Gmail), preview APP_URL, Slices 5–6.
+- Next action: merge slice-5-sharing, confirm production share/metadata URLs, owner tries native sharing on a phone, then plan Slice 6 (integration and release).
+- Release blockers: Slice 6 (full-journey, accessibility, mobile/error/security checks; P1–P3). Preview APP_URL fallback declined by owner; previews stay browse-only.
 - Sign-in improvements done (code + any-browser link, Gmail SMTP). Swap Gmail for a domain-based provider (e.g. Resend) once a domain is bought.
+
+## Slice 5 evidence — 2026-09-24
+
+Slice and acceptance IDs: 5 / S1–S4.
+Files changed and reason: src/lib/share.ts (server-built share targets and page metadata from APP_URL; null where no origin, so no localhost/preview links), src/app/share-button.tsx (Web Share → clipboard → selectable link; cancel shows nothing; feedback only on success), src/app/ratings/[ratingId]/page.tsx (public individual rating via existing public_rating RPC, 404 for unknown/malformed IDs, retired notes), layout metadataBase, per-page title/description/canonical/Open Graph for /, restaurants, dishes, ratings; share buttons on restaurant, dish and (saved rating only) rating form; catalog getPublicRating; tests/share.test.ts; README. No database changes.
+Commands and actual outcomes: lint, typecheck, `npm test` (160/160), build: pass.
+Checks (Chrome against development with one temporary test account, deleted afterwards; development ratings back to 0):
+- S1: restaurant share → "Bombay House on Forkd" / "See what to order at Bombay House (463 N University Ave, Provo) on Forkd." + /restaurants/<id>; dish share → "Saag Paneer at Bombay House on Forkd. No ratings yet." + /dishes/<id>; both URLs return 200 with the right heading in a fresh signed-out browser. Unit tests cover rated/unrated wording (never 0/10) and APP_URL use.
+- S2: no "Share my rating" before saving; after saving 7.5 and moving the slider to an unsaved 9.0, the share says 7.5 with /ratings/<id>; a signed-out browser sees "An individual rating 7.5", dish, restaurant and date; after editing to 6.0 the same URL shows 6.0.
+- S3: native share success → "Shared."; AbortError → no message; no share API → clipboard gets "message URL" and "Link copied."; clipboard denied → pre-selected link field.
+- S4: server-rendered title, description, canonical and og:title/description/url/site_name/type on /, restaurant, dish and rating pages, absolute from APP_URL (localhost in local dev; production confirmed after merge). Rating page HTML contains no test email or user ID. Unknown, malformed and quote-injection rating IDs → 404.
+- Chrome at 390/320 px on rating, dish and restaurant pages: no overflow, targets ≥ 44 px, no console errors.
+Remaining issues: confirm production og:url/canonical/share URLs use https://forkdmvp.vercel.app after merge; owner tries the native share sheet on a phone.
 
 ## Sign-in fix — 2026-09-23
 

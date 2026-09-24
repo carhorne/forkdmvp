@@ -2,9 +2,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
+import type { ShareTarget } from "@/lib/share";
+import { ShareButton } from "@/app/share-button";
 import { saveRating, type RatingState } from "./actions";
 
-type Props = { dishId: string; signedIn: boolean; savedScore: string | null };
+type Props = { dishId: string; signedIn: boolean; savedScore: string | null; share: ShareTarget | null };
 const initial: RatingState = { status: "idle" };
 const DRAFT_TTL_MS = 60 * 60 * 1000;
 const draftKey = (dishId: string) => `forkd:draft-rating:${dishId}`;
@@ -25,7 +27,7 @@ function clearDraft(dishId: string) {
   try { localStorage.removeItem(draftKey(dishId)); } catch { /* Storage unavailable. */ }
 }
 
-export function RatingForm({ dishId, signedIn, savedScore }: Props) {
+export function RatingForm({ dishId, signedIn, savedScore, share }: Props) {
   const router = useRouter();
   // A dropped connection rejects the action call itself; report it here instead of the page error screen,
   // keeping the entered score and never showing success.
@@ -70,5 +72,7 @@ export function RatingForm({ dishId, signedIn, savedScore }: Props) {
       {state.status === "signed-out" && <p className="status error" role="alert">{state.message}{" "}
         <Link href={loginHref} onClick={() => writeDraft(dishId, value)}>Sign in</Link></p>}
     </div>
+    {/* Offered only once a rating is saved; always shares the saved score, not the slider. */}
+    {signedIn && savedScore && share && <ShareButton share={share} label={`Share my rating (${savedScore})`} />}
   </form>;
 }

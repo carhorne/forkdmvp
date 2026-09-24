@@ -1,8 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { configuredOrigin } from "@/lib/share";
 import "./globals.css";
 
-export const metadata: Metadata = { title: "Forkd — Know what to order", description: "A small, carefully checked collection of local restaurant menus." };
+// metadataBase makes page canonical/Open Graph paths absolute production URLs (from APP_URL).
+export function generateMetadata(): Metadata {
+  const origin = configuredOrigin();
+  return {
+    ...(origin ? { metadataBase: new URL(origin) } : {}),
+    title: "Forkd — Know what to order",
+    description: "A small, carefully checked collection of local restaurant menus.",
+    openGraph: { siteName: "Forkd", type: "website" },
+  };
+}
 
 export default function Layout({ children }: Readonly<{ children: React.ReactNode }>) {
   return <html lang="en"><body>

@@ -67,3 +67,12 @@ export async function getDish(id: string) {
   if (error) throw new Error("Dish unavailable");
   return data[0] ?? null;
 }
+
+// One saved rating's public projection (score, date, dish, restaurant; never user or email). Null means 404.
+export async function getPublicRating(id: string) {
+  if (!isUuid(id)) return null;
+  const client = await createClient();
+  const { data, error } = await client.rpc("public_rating", { p_rating_id: id });
+  if (error) throw new Error("Rating unavailable");
+  return data[0] ?? null;
+}

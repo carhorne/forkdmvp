@@ -38,8 +38,9 @@ Checks:
 - D3: DB tests on 120 dishes (duplicate names, tied averages/prices, unrated, unknown prices, one retired): all three sorts equal an independent comparator across pages of 50/50/19. Chrome on the development fixture: each sort walks pages 50/50/20 via Next with 120 unique dishes and ordering holds across page boundaries.
 - D4: unit tests for invalid sort/page/category fallbacks and URL round trip. Chrome: changing sort on page 2 → `?sort=price` (page reset); dropdowns apply immediately; refresh keeps q/category/sort; Back restores the previous URL and control values; page past end offers page 1; invalid params → 200 with defaults.
 - Chrome at 390/320 px: no overflow, all targets ≥ 44 px, no console errors (a duplicate sibling key was found and fixed during testing).
-Database/auth impact: one additive read-only function; no table or policy changes. restaurant_menu is now unused by the app; drop it in a later migration once production runs this slice.
-Remaining issues: real-phone check; Vercel preview check; apply 202609230002 to forkdprod before merging; remove the development fixture after the preview check.
+- Vercel preview (slice-3-discovery, via `vercel curl`): "  CHICKEN " → 5 matches; category + "masala" → Chicken Tikka Masala; fixture page 3 for each sort → showing 101–120, Page 3 of 3, 20 rows; invalid params → page 1; past-end page handled.
+Database/auth impact: one additive read-only function; no table or policy changes. Applied to development and, after the preview passed, to forkdprod (anon RPC "masala" at Bombay House → 3). CLI relinked to development. Development fixture removed afterwards (development back to 10 restaurants; fixture accounts deleted). restaurant_menu is now unused by the app; drop it in a later migration once production runs this slice.
+Remaining issues: real-phone check.
 
 ## Production database switch — 2026-09-23
 

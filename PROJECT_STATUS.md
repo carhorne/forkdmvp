@@ -8,6 +8,16 @@ Development Supabase: tvyzezmbyqszscldrqvi (local, Vercel Preview; labelled test
 Production Supabase: forkdprod, mlmcfssynaqqofadraxe (Vercel Production; verified seed, real ratings only).
 Vercel: project forkdmvp, https://forkdmvp.vercel.app.
 
+## Post-release catalog expansion — 2026-09-24
+
+Branch: codex/provo-catalog-expansion. Separate data PR; UI work is independent.
+- Added 10 manually reviewed Provo locations and 107 selected dishes (20 / 207 total). See seed/SOURCE_REVIEW.md for sources, exact selections, and the owner's explicit DoorDash exception for El Gallo Giro.
+- F3: all files pass production seed validation; 10–15 dishes per new restaurant, USD cents, dates/sources, no fabricated scores/photos. Sage prices absent; Wariqe prices withheld because ordering channels differ.
+- F4: development dry-run: 117 creates, 110 unchanged, no updates/retirements. First apply succeeds; second apply reports 227 unchanged, zero creates/updates/retirements. Existing importer transaction/identity/rating preservation tests pass.
+- Checks: lint PASS, typecheck PASS, 161/161 tests PASS. Browser at 390×844: public home lists 20 locations; Sage opens with 15 dishes, unknown prices, no ratings, source/date, and working discovery controls. No build rerun for data-only changes.
+- Database/auth: existing administrative importer only; no migration, schema, RLS, auth or backfill changes. Applied to DEVELOPMENT only. Production remains on the released catalog until this data PR is reviewed and imported explicitly.
+- Remaining: merge/review data PR, production dry-run/apply/repeat check and public production smoke test; restaurant confirmation of online-vs-dine-in prices remains manual.
+
 ## Slice progress
 
 | Slice | State | Evidence |

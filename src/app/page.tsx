@@ -7,6 +7,7 @@ import { MAX_QUERY_LENGTH, parseRestaurantQuery, type RestaurantQuery } from "@/
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "./login/actions";
 import { pageMetadata } from "@/lib/share";
+import { PendingHint } from "./pending-hint";
 import { RetryButton } from "./retry-button";
 
 export const metadata = pageMetadata({ title: "Know what to order", description: "Search a small, hand-checked collection of Provo restaurant menus, see which dishes diners rate highest, and rate what you ate.", path: "/" });
@@ -52,7 +53,7 @@ async function Results({ query }: { query: RestaurantQuery }) {
       <Link className="restaurant" href={`/restaurants/${r.id}`}>
         <p className="eyebrow">{r.cuisine || "LOCAL RESTAURANT"}</p><h3>{r.name}</h3>
         <p className="address">{r.address}<br />{r.city}, {r.region}</p>
-        <p className="provenance">{r.menu_coverage === "selected" ? "Selected menu" : "Full menu"}</p>
+        <p className="provenance">{r.menu_coverage === "selected" ? "Selected menu" : "Full menu"} <PendingHint /></p>
       </Link>
     </li>)}</ul>
     {query.kind === "name" && <ClearSearch />}

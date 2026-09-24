@@ -8,6 +8,7 @@ import { MENU_PAGE_SIZE, menuHref, parseMenuParams, type MenuParams } from "@/li
 import { isUuid, MAX_QUERY_LENGTH } from "@/lib/search";
 import { pageMetadata, restaurantPath, restaurantShare, restaurantShareText } from "@/lib/share";
 import { RetryButton } from "@/app/retry-button";
+import { PendingHint } from "@/app/pending-hint";
 import { ShareButton } from "@/app/share-button";
 import { ScoreBadge } from "@/app/score-badge";
 import { MenuControls } from "./menu-controls";
@@ -38,7 +39,7 @@ export default async function RestaurantPage({ params, searchParams }: Props) {
     <p className="back"><Link href="/">← All restaurants</Link></p>
     <section className="hero">
       <p className="eyebrow">{restaurant.cuisine || "LOCAL RESTAURANT"}</p>
-      <h1>{restaurant.name}</h1>
+      <h1 className={restaurant.name.length > 48 ? "title-long" : undefined}>{restaurant.name}</h1>
       <p className="address">{restaurant.address}<br />{restaurant.city}, {restaurant.region}</p>
       {!restaurant.is_active && <p className="status">This restaurant is no longer in Forkd’s current collection.</p>}
       {share && <ShareButton share={share} label="Share this restaurant" />}
@@ -88,6 +89,7 @@ async function Menu({ restaurantId, params }: { restaurantId: string; params: Me
           <span className="dish-name">{d.name}</span>
           <span className="dish-meta">{d.category} · <span className="nowrap">{formatPrice(d.price_cents, d.currency)}</span></span>
           {d.description && <span className="dish-desc">{d.description}</span>}
+          <PendingHint />
         </span>
         <ScoreBadge average={d.average_score} count={d.rating_count} />
       </Link>

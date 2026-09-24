@@ -2,7 +2,7 @@
 
 **Know what to order.** A one-week, mobile-first Next.js web MVP for finding a supported restaurant, browsing its ranked menu, rating a dish, and sharing a useful link.
 
-Slice 0 implementation is in progress. The repository now contains the Next.js app, SQL migrations, authentication, seed tools, and isolated database tests. See PROJECT_STATUS.md for actual acceptance evidence and remaining hosted checks.
+The MVP is live at https://forkdmvp.vercel.app. See RELEASE.md for the release record and PROJECT_STATUS.md for acceptance evidence.
 
 ## Run locally
 
@@ -22,6 +22,15 @@ npm run typecheck
 npm test
 npm run build
 ```
+
+End-to-end checks (full diner journey on phone and desktop sizes, WCAG 2.1 AA scan with axe-core, 320 px and keyboard-only) run against a local dev server and the **development** Supabase project only:
+
+```sh
+npm run test:e2e            # starts `npm run dev` on port 3000 if nothing is running there
+PW_CHANNEL= npm run test:e2e  # use Playwright's Chromium instead of installed Google Chrome (npx playwright install chromium)
+```
+
+`tests/e2e/dev-harness.ts` refuses to run unless `.env.local` points at the development project with `SEED_TARGET=development`. It creates two temporary password test accounts (the app itself has no password sign-in), signs them in with real session cookies, and deletes them and their ratings afterwards. The journey assumes nobody else has rated Bombay House "Saag Paneer" on development.
 
 The database tests run the actual SQL migrations on PGlite's PostgreSQL engine with isolated anon/user A/user B roles. They do not contact, reset, or seed a hosted project. Hosted Supabase/email/browser checks are additional acceptance requirements. Webpack is explicitly selected because this workstation's Turbopack worker cannot bind its required port.
 
@@ -105,6 +114,7 @@ Sharing: restaurant, dish and saved-rating Share buttons use the native share sh
 | [.env.example](.env.example) | Placeholder environment settings |
 | [CODEX_START_HERE.md](CODEX_START_HERE.md) | Small plan/build/review prompts |
 | [PROJECT_STATUS.md](PROJECT_STATUS.md) | Compact handoff and evidence log |
+| [RELEASE.md](RELEASE.md) | Release record: environments, migrations, tester checklist, limitations, rollback |
 | [DECISIONS_AND_SOURCES.md](DECISIONS_AND_SOURCES.md) | Blueprint mapping, assumptions and sources |
 | [seed/restaurant.example.json](seed/restaurant.example.json) | Fictional format example; never production seed |
 

@@ -94,3 +94,6 @@ button.secondary { background: transparent; color: var(--ink); border: 1px solid
 .share-manual { display: grid; gap: 6px; width: 100%; }
 .share-manual label { font-weight: 700; }
 .share-manual input { margin-bottom: 0; font-size: 15px; }
+.pending-hint { font-size: 12px; font-weight: 700; color: var(--accent); }
+.pending-hint:empty { display: none; }
+h1.title-long { font-size: clamp(28px, 6vw, 44px); letter-spacing: -1px; }

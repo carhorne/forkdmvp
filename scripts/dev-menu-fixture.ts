@@ -22,9 +22,10 @@ const SOURCE = "https://forkd.invalid/development-fixture";
 const CATEGORIES = ["Mains", "Sides", "Drinks", "Desserts"];
 const dishes = Array.from({ length: 120 }, (_, i) => ({
   seed_key: `fixture-${i}`, slug: `fixture-${i}`,
-  name: `Test dish ${String(i + 1).padStart(3, "0")}`,
+  // Dish 001 has deliberately long text for 320 px layout checks.
+  name: i === 0 ? "Test dish 001 with an intentionally very long name: slow-braised heirloom something with a second clause that keeps going to check wrapping" : `Test dish ${String(i + 1).padStart(3, "0")}`,
   category: CATEGORIES[i % CATEGORIES.length],
-  description: i % 10 === 0 ? "Spicy development fixture dish" : null,
+  description: i === 0 ? `Spicy development fixture dish. ${"A long description sentence for layout checks. ".repeat(8).trim()}` : i % 10 === 0 ? "Spicy development fixture dish" : null,
   price_cents: i % 7 === 0 ? null : 500 + ((i * 37) % 13) * 100,
   currency: "USD",
 }));
@@ -37,7 +38,7 @@ async function fixtureUsers() {
 }
 
 async function create() {
-  const restaurant = { seed_key: SEED_KEY, slug: SEED_KEY, name: "Forkd Test Kitchen — development fixture", address: "Not a real restaurant",
+  const restaurant = { seed_key: SEED_KEY, slug: SEED_KEY, name: "Forkd Test Kitchen — development fixture with a deliberately long restaurant name for layout checks", address: "Not a real restaurant",
     city: "Provo", region: "UT", country: "US", cuisine: "Development fixture", menu_source_url: SOURCE, source_checked_at: new Date().toISOString(), menu_coverage: "selected", is_active: true };
   const withSource = dishes.map((d) => ({ ...d, source_url: SOURCE, source_checked_at: restaurant.source_checked_at, is_active: true }));
   // The importer accepts ≤100 dishes per call and preserves omitted dishes.

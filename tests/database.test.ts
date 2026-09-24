@@ -50,11 +50,11 @@ describe("migrations, RLS and atomic seed import on real PostgreSQL engine", () 
       await db.query("insert into public.ratings(user_id,dish_id,score) values ($1,$2,10)", [B, dish]);
     });
     await actor("anon", null, async () => {
-      const row = (await db.query<{ average_score: string; rating_count: number }>("select * from public.restaurant_menu($1)", [restaurant])).rows[0];
+      const row = (await db.query<{ average_score: string; rating_count: number }>("select * from public.menu_page($1)", [restaurant])).rows[0];
       expect(Number(row.average_score)).toBe(9); expect(Number(row.rating_count)).toBe(2);
       const saved = (await db.query<{ score: string }>("select * from public.public_rating($1)", [rating])).rows[0];
       expect(saved.score).toBe("8"); expect(saved).not.toHaveProperty("user_id"); expect(saved).not.toHaveProperty("email");
-      await expect(db.query("select * from public.restaurant_menu($1,51,0)", [restaurant])).rejects.toThrow();
+      await expect(db.query("select * from public.menu_page($1, null, null, 'top', 51, 0)", [restaurant])).rejects.toThrow();
       const detail = (await db.query<Record<string, unknown>>("select * from public.dish_detail($1)", [dish])).rows[0];
       expect(Number(detail.average_score)).toBe(9); expect(Number(detail.rating_count)).toBe(2);
       expect(detail.restaurant_name).toBe(fixture.name); expect(detail.is_active).toBe(true);
@@ -68,7 +68,7 @@ describe("migrations, RLS and atomic seed import on real PostgreSQL engine", () 
       await expect(db.query("insert into public.ratings(user_id,dish_id,score) values ($1,$2,6)", [A, dish])).rejects.toThrow();
       await db.query("update public.ratings set score=6 where id=$1", [rating]);
     });
-    const row = (await db.query<{ average_score: string; rating_count: number }>("select * from public.restaurant_menu($1)", [restaurant])).rows[0];
+    const row = (await db.query<{ average_score: string; rating_count: number }>("select * from public.menu_page($1)", [restaurant])).rows[0];
     expect(Number(row.average_score)).toBe(8); expect(Number(row.rating_count)).toBe(2);
   });
   it("dry-run is read-only and repeat applies preserve all IDs, timestamps, counts and ratings", async () => {
@@ -92,7 +92,7 @@ describe("migrations, RLS and atomic seed import on real PostgreSQL engine", () 
     await actor("anon", null, async () => {
       expect((await db.query("select * from public.public_rating($1)", [rating])).rows).toHaveLength(1);
       // Retired dishes leave the menu but their links still resolve, flagged inactive, with history intact.
-      expect((await db.query<{ id: string }>("select * from public.restaurant_menu($1)", [restaurant])).rows.map((r) => r.id)).not.toContain(dish);
+      expect((await db.query<{ id: string }>("select * from public.menu_page($1)", [restaurant])).rows.map((r) => r.id)).not.toContain(dish);
       const retired = (await db.query<{ is_active: boolean; rating_count: number }>("select * from public.dish_detail($1)", [dish])).rows[0];
       expect(retired.is_active).toBe(false); expect(Number(retired.rating_count)).toBe(2);
     });
@@ -111,10 +111,18 @@ describe("Top Rated menu order (PRODUCT_SPEC.md)", () => {
       await tdb.query("insert into public.ratings(user_id,dish_id,score) select $1, id, $2 from public.dishes where name=$3", [[A, B][i], score, name]);
     const id = (await tdb.query<{ id: string }>("select id from public.restaurants")).rows[0].id;
     await tdb.exec("set role anon");
-    const rows = (await tdb.query<{ name: string; average_score: string | null; rating_count: number }>("select * from public.restaurant_menu($1)", [id])).rows;
+    const rows = (await tdb.query<{ name: string; average_score: string | null; rating_count: number }>("select * from public.menu_page($1)", [id])).rows;
     await tdb.exec("reset role");
     expect(rows.map((r) => r.name)).toEqual(["Delta", "Alpha", "Bravo", "Charlie", "Foxtrot", "Aardvark", "Echo"]);
     expect(Number(rows[1].average_score)).toBe(9); expect(Number(rows[1].rating_count)).toBe(2);
     expect(rows.at(-1)).toMatchObject({ average_score: null }); expect(Number(rows.at(-1)!.rating_count)).toBe(0);
+  }, 60000);
+});
+
+describe("retired functions", () => {
+  it("restaurant_menu no longer exists (replaced by menu_page)", async () => {
+    const fresh = await migratedDb();
+    expect((await fresh.query("select 1 from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname = 'restaurant_menu'")).rows).toEqual([]);
+    await fresh.close();
   }, 60000);
 });

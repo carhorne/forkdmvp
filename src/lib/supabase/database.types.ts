@@ -34,6 +34,8 @@ export type Database = {
         id: string; restaurant_id: string; name: string; category: string; description: string | null;
         price_cents: number | null; currency: string; average_score: number | null; rating_count: number; total_count: number;
       }[] };
+      // p_score is sent as validated text ("9.2") so PostgREST casts it to numeric without float rounding.
+      save_rating: { Args: { p_dish_id: string; p_score: string }; Returns: { id: string; dish_id: string; score: number; updated_at: string }[] };
       dish_detail: { Args: { p_dish_id: string }; Returns: {
         id: string; restaurant_id: string; name: string; category: string; description: string | null;
         price_cents: number | null; currency: string; source_url: string; source_checked_at: string; is_active: boolean;

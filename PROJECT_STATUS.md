@@ -23,10 +23,17 @@ Vercel: project forkdmvp, https://forkdmvp.vercel.app.
 ## Latest handoff
 
 - Accepted product scope: six features in ROADMAP.md; 10–20 manually verified local restaurant menus.
-- Default decisions: 1.0–10.0 tenths; one editable rating/user/dish; email magic links; public saved-rating links without account identity; selected menus labelled honestly.
+- Default decisions: 1.0–10.0 tenths; one editable rating/user/dish; passwordless email sign-in by code or link (changed 2026-09-23 from PKCE magic links, which failed whenever the email opened in a different browser); public saved-rating links without account identity; selected menus labelled honestly.
 - Next action: owner tests the real magic-link rating round trip and phone layout, merge slice-4-ratings, then the sign-in improvements (email code + custom SMTP), then plan Slice 5 (sharing).
 - Release blockers: F2 remaining checks, custom SMTP sender before testers (built-in limit is 2 emails/hour per project), preview APP_URL, Slices 5–6.
 - Planned after Slice 4 (owner-approved): sign-in improvements — 6-digit email code alongside the magic link (fixes links opening in a different in-app browser) and Resend custom SMTP on both projects once a domain exists.
+
+## Sign-in fix — 2026-09-23
+
+Problem: production logs showed every attempt as POST /login → GET /auth/callback about 10 s later → GET /login (error). The PKCE magic link needs a verifier cookie from the requesting browser; mail apps open links in a different (often in-app) browser, so exchange always failed. Separately, the built-in sender allows 2 emails/hour per project.
+Change: one email with a code and a link, both verified server-side with verifyOtp (email+code, or token_hash). New /auth/confirm page needs a tap before verifying (scanner-safe) and derives the return path only from a same-origin redirect_to. Login shows a code step with resend and change-email; auth errors are mapped (429/over_* → wait message). supabase/templates/sign-in.html is the shared template. No database changes.
+Checks (development, admin-generated tokens so no email was sent; test user deleted afterwards): code — wrong code rejected, correct code creates the @supabase/ssr session cookie, reuse rejected; development codes are 8 digits, so copy says "code" and parsing accepts 6–10 digits. Link — opened in a fresh browser that never requested it: confirm page does not sign in until tapped, then lands on /dishes/<id>#rate signed in with "Save rating"; reused link → /login?error=link with recovery text; a scanner-style visit does not consume the token; bogus token → login error; wrong type → "This link isn’t complete"; foreign-origin redirect_to → lands on /. Unit tests for code, token, type and redirect parsing. lint, typecheck, `npm test` (153/153), build: pass. 390/320 px: no overflow, targets ≥ 44 px, no console errors.
+Remaining: Gmail sender is forkd.app.official@gmail.com (App Password in .env.db.local); apply templates, allowlist, SMTP and rate limit to forkdprod right after this branch reaches production; owner's real-email test on a phone.
 
 ## Slice 4 evidence — 2026-09-23
 

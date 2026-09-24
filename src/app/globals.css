@@ -83,3 +83,8 @@ footer span { font-size: 11px; }
 .skip-link:focus { top: 8px; z-index: 10; }
 @media(min-width: 720px) { .catalog { grid-template-columns: 1fr 1fr; } .hero { padding-top: 64px; } }
 @media(prefers-reduced-motion: no-preference) { button:hover, .button:hover { background: #405343; transition: background .15s; } }
+.login-steps { display: grid; gap: 12px; }
+.login-secondary { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+.login-secondary button { flex: 1 1 160px; width: auto; }
+button.secondary { background: transparent; color: var(--ink); border: 1px solid #808b7d; }
+.code-input { font-size: 28px; letter-spacing: 6px; font-variant-numeric: tabular-nums; max-width: 240px; }

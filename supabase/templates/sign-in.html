@@ -1,0 +1,10 @@
+<!-- Forkd sign-in email. Used for BOTH "Magic Link" and "Confirm signup" templates in every Supabase project.
+     Subject: Your Forkd sign-in code: {{ .Token }}
+     The link goes to /auth/confirm, which verifies the token hash on the server (no PKCE cookie), so it works in any
+     browser or device. redirect_to carries the app's requested return path. The code works on its own too. -->
+<h2 style="font-family:Georgia,serif;font-weight:400">Sign in to Forkd</h2>
+<p>Your sign-in code:</p>
+<p style="font-size:28px;font-weight:700;letter-spacing:6px;font-family:monospace">{{ .Token }}</p>
+<p>Type it on the sign-in page, or tap this link on any device:</p>
+<p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&redirect_to={{ .RedirectTo }}">Finish signing in to Forkd</a></p>
+<p style="color:#5e675d;font-size:13px">The code and link expire in an hour, and only the newest email works. If you didn’t ask to sign in, you can ignore this email.</p>
